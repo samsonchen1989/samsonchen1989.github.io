@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Gamer Cat</title>
+    <link>http://samsonchen1989.github.io/</link>
+    <description>Recent content on Gamer Cat</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Thu, 28 Jul 2016 23:00:12 +0800</lastBuildDate>
+    <atom:link href="http://samsonchen1989.github.io/feed/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>cocos2dx UI的一些碎碎念</title>
+      <link>http://samsonchen1989.github.io/post/blog1/</link>
+      <pubDate>Thu, 28 Jul 2016 23:00:12 +0800</pubDate>
+      
+      <guid>http://samsonchen1989.github.io/post/blog1/</guid>
+      <description>
+
+&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+
+&lt;p&gt;一不小心也做了快两年游戏程序了，主程，我，服务器小哥三个程序996了一年多，自己主要做地图探索，陷阱机关的GamePlay，成就，和其他各式各样的纯UI系统。个人理想中的配置应该是三个客户端和两个服务器，可惜现实很骨感，小公司成本有限，基本都是谁有空就接着往下做，还要和主程抢服务器小哥做对接，不过也算有始有终，游戏总算上线稳定运行了。&lt;/p&gt;
+
+&lt;p&gt;小公司的工作是人驱动的，大公司是流程驱动的，各有利弊。以前在TP的时候，工作都是邮件驱动，产品部的发邮件给组长，一群人先文字讨论半天，然后把你加进来，可能只是改个字而已。现在策划提个简单的需求，只要喊一声，半个小时后就能做完出结果了，非常快捷，不需要走流程。当然弊端也有，比如缺乏记录和文档，可能过半年策划就记不起来自己当时为啥提这个需求了。规范化和流程化是必经之路，不过考虑到手游的开发周期，如何简化和平衡也是个问题。&lt;/p&gt;
+
+&lt;p&gt;我们的游戏Heroes Quest在加拿大测试的时候，正好遇到皇室战争上架，然后7月初正式全球上的时候，又遇到了Pokemon Go这种怪物，所以定发布日期也是一种学问啊&lt;em&gt;(:зゝ∠)&lt;/em&gt;
+&lt;a href=&#34;https://itunes.apple.com/app/id1118861621?mt=8&#34;&gt;App Store链接&lt;/a&gt;，&lt;a href=&#34;https://play.google.com/store/apps/details?id=com.heroesquest.rpg&#34;&gt;Google Play链接&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;虽然作为一个Unity党，对cocos2dx不怎么感冒，不过自己的喜好并不能影响到工作，有一些基本的原则和技巧是独立于工具或者引擎的，因为之前的博客跟着到期的vps随风而去了，所以最近打算把以前的一些工作总结一下，把博客搬到Gihub来，也算是新开始吧。&lt;/p&gt;
+
+&lt;p&gt;UI方面的工作比较碎，比较单调，但也有很多讲究，合理的UI设计可以节省很多DrawCall和CPU的开销，这里总结一些Tips。&lt;/p&gt;
+
+&lt;h2 id=&#34;需要时加载图集&#34;&gt;需要时加载图集&lt;/h2&gt;
+
+&lt;p&gt;为了节省DrawCall一般会把相同界面或者相同类型的图片用TexturePacker打包成一张整图，比如通用的UI框体，按钮可以打包成一个图集。在每个场景创建前，加载一些必用图集，然后看情况加载其他图集。&lt;/p&gt;
+
+&lt;p&gt;尽量把不同的窗口做成不同的Layer或Node，每个窗口管理自己所需要的图集，避免无用图集占用内存，做到&lt;strong&gt;需要时加载&lt;/strong&gt;。这点有点像Unity的&lt;strong&gt;组件化Component-Based&lt;/strong&gt;思想，尽量把重复的部分（甚至不重复的部分，你永远不会想到策划哪天会突发奇想，复用某一块界面）独立，然后按需加载。&lt;/p&gt;
+
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;平台&lt;/th&gt;
+&lt;th&gt;推荐图片格式&lt;/th&gt;
+&lt;th&gt;推荐Pixel格式&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;ios&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;pvr.ccz&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;PVRTC4&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;Android&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;png和pvr.ccz&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;RGBA8888,RGBA4444加抖动&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;非透明图片采用&lt;strong&gt;JPG+RGB565&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;详细的可以参考：
+1. &lt;a href=&#34;http://blog.csdn.net/langresser_king/article/details/8426708&#34;&gt;iOS和android游戏纹理优化和内存优化(cocos2d-x)&lt;/a&gt;
+2. &lt;a href=&#34;http://www.cocos.com/doc/tutorial/show?id=2902&#34;&gt;浅谈Cocos2d-x纹理优化&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;利用cache实现-只创建一次原则&#34;&gt;利用Cache实现“只创建一次原则”&lt;/h2&gt;
+
+&lt;p&gt;一个稍微复杂的界面里，各个标签切换可能会产生大量的重复的Button、Label或者自定义Node，利用Cache把它们存储起来进行重复利用，可以减少明显的卡顿和不必要的GC。
+一个Lua的简单实现：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-lua&#34;&gt;self.buttonCache = {
+    buttonTable = {},
+    index = 1,
+    getButton = function()
+        local index = self.buttonCache.index
+        local button = self.buttonCache.buttonTable[index]
+        if button then
+            button:show()
+        else
+            button = WidgetHelper.quickItemWidget()
+                :retain()
+                :setAnchorPoint(0.5,0.5)
+                :setTouchEnabled(true)
+                :onTouch(handler(self,function(self,event) end))
+
+            self.buttonCache.buttonTable[index] = button
+        end
+
+        self.buttonCache.index = self.buttonCache.index + 1
+        return button
+    end,
+
+    recycleButton = function()
+        for k,v in pairs(self.buttonCache.buttonTable) do
+            v:removeFromParent()
+            v:hide()
+        end
+
+        self.buttonCache.index = 1
+    end,
+
+    releaseButton = function()
+        for k,v in pairs(self.buttonCache.buttonTable) do
+            v:release()
+        end
+    end,
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;获取Button的时候只用调用&lt;strong&gt;getButton()&lt;/strong&gt;，在切换标签或清空列表时调用&lt;strong&gt;recycleButton()&lt;/strong&gt;回收Button并重新计数，在退出Scene的时候调用&lt;strong&gt;releaseButton()&lt;/strong&gt;清除Cache。&lt;/p&gt;
+
+&lt;p&gt;不单单是Button，任何重复的组件都可以用类似的格式进行Cache存储和重复利用，可以节省一大笔创建和销毁的开销。
+需要注意的是，Cache中的元素，在重复利用时要做好检查，避免出现重复添加子节点，Enable状态没有重置等问题。&lt;/p&gt;
+
+&lt;h2 id=&#34;提供统一的ui控件创建接口&#34;&gt;提供统一的UI控件创建接口&lt;/h2&gt;
+
+&lt;p&gt;游戏中最常见的组件，物品道具Button，TTFLabel文本，HtmlLabel文本，RichText文本，采用统一的接口创建。保持格式统一，减少重复代码。特别是物品Button，一般是一个Button底加Icon Sprite加数量Label的组合，提供一个统一接口，处理不同Item的样式，比如装备的彩色底框，碎片的角标，人物头像的星级等等，做到传入一个Item ID和Type，就能产生相应的Button。&lt;/p&gt;
+
+&lt;h2 id=&#34;延时加载&#34;&gt;延时加载&lt;/h2&gt;
+
+&lt;p&gt;有时候运气比较背，一个列表里面要加载几十个子Node，每个Node上还都有动画和各种子Node，全部添加完需要2s左右，卡顿明显，除了怂恿策划美术改图之外，延时加载也是一个解决办法——不要等列表子Node加载完再显示，先显示列表，开一个计时器，每隔0.1s~0.2s添加一个子Node，在完全加载完前禁用用户交互，虽然时间差不多，但效果要明显好于让用户卡个几秒。&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>
