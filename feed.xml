@@ -6,8 +6,65 @@
     <description>Recent content on Gamer Cat</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Thu, 28 Jul 2016 23:00:12 +0800</lastBuildDate>
+    <lastBuildDate>Tue, 02 Aug 2016 20:56:09 +0800</lastBuildDate>
     <atom:link href="https://samsonchen1989.github.io/feed/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>有关音乐音效</title>
+      <link>https://samsonchen1989.github.io/post/blog2/</link>
+      <pubDate>Tue, 02 Aug 2016 20:56:09 +0800</pubDate>
+      
+      <guid>https://samsonchen1989.github.io/post/blog2/</guid>
+      <description>&lt;p&gt;国内的公司对音效音乐啥的不怎么重视，可能一个稍微大点的公司里只有一个人来负责音效音乐的……嗯，外包接洽工作，而那些无良的外包公司七拼八凑一些音效就扔给你。一个活例子就是我们找了家特便宜的音效外包，结果直到老外玩家给了差评才发现，给过来的战斗胜利音效竟然和COC一模一样。&lt;/p&gt;
+
+&lt;p&gt;相反，去KS上筹钱的项目里，四五个人的团队介绍里面总会有一个妹子或者花臂大哥，title是音乐音效指导，作曲家。Steam上很多游戏的唯一DLC就是Soundtrack原声包，还价格不菲。&lt;/p&gt;
+
+&lt;p&gt;没办法，这就是做方便面和担仔面，批发调料包和自己炖浇头的区别。之所以想到这个比方是因为上周去大悦城吃了一家叫“度小月”台湾面，味道还不错，就是量太少了，一碗根本不够吃。这也或许是为啥玩家还是会对各种流水线商业游戏趋之若鹜，按照Limbo和Inside这家工作室的开发速度，艺术游戏和精良的个人游戏是喂不饱疯狂的&lt;del&gt;特别闲的&lt;/del&gt;玩家的。&lt;/p&gt;
+
+&lt;p&gt;为了证明上面的问题，拆了COC的包，顺便看了看它的音乐文件格式：&lt;/p&gt;
+
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;平台&lt;/th&gt;
+&lt;th&gt;音乐文件格式&lt;/th&gt;
+&lt;th&gt;音效文件格式&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Android&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;.mp3&lt;/strong&gt;(比特率&lt;strong&gt;64kbps&lt;/strong&gt;)&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;.ogg&lt;/strong&gt;(比特率&lt;strong&gt;32~42kbps&lt;/strong&gt;)&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;iOS&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;.mp3&lt;/strong&gt;(比特率&lt;strong&gt;64kbps&lt;/strong&gt;)&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;.caf&lt;/strong&gt;(比特率&lt;strong&gt;32kbps&lt;/strong&gt;)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;一般现在的游戏引擎都会把音乐和音效的播放分开，音乐同一时间只能播放一个，音效可以同时播放多个，但也有例外，比如针对三星的一些Android机型，同时播放多个音效文件会造成明显的卡顿，所以需要一个计时器来限定下单位时间内播放音效的次数。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-lua&#34;&gt;AudioManager.repeatSfx = {}
+
+local function limitSoundPlay(sfx_name)
+  if AudioManager.repeatSfx[sfx_name] or table.nums(AudioManager.repeatSfx) &amp;gt; 2 then
+    return true
+  end
+
+  AudioManager.repeatSfx[sfx_name] = scheduler.performWithDelayGlobal(function()
+    AudioManager.repeatSfx[sfx_name] = nil
+  end,0.3)
+
+  return false
+end
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
     
     <item>
       <title>cocos2dx UI的一些碎碎念</title>
