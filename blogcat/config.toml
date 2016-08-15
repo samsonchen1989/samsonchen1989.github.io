@@ -1,0 +1,59 @@
+BaseURL = "https://samsonchen1989.github.io/"
+LanguageCode = "zh-CN"
+HasCJKLanguage = true
+Title = "Gamer Cat"
+Theme = "hugo-pacman-theme"
+pygmentsStyle = "default"
+pygmentsUseClasses = true
+RSSUri = "feed.xml"
+
+[Author]
+  Name = "samsonchen"
+
+[Params]
+  AuthorHomepage = "https://samsonchen1989.github.io/"
+  BottomIntroduce = "Samsonchen：无证程序员，游戏爱好者，psn奖杯咸鱼 <br/> 对AI，Shader和Procedural Content Generation比较感兴趣"
+  Description = "hehe"
+  Subtitle = "偶尔码字和写代码，大部分时间都在睡觉😪和玩PS4的懒猫"
+  Weibo = "canselwicecs"
+  #WeiboID = 1816308191
+  Twitter = "samsonchen_1989"
+  GitHub = "samsonchen1989"
+  #Facebook = "coderzh"
+  #LinkIn = "samsonchen"
+  Imglogo = "img/logo.svg"
+  AuthorImg = "img/head.jpeg"
+  DateFormat = "2006年01月02日"
+  MonthFormat = "2006年01月"
+  FancyBox = true
+
+  #[Params.DuoShuo]
+    #ShortName = "coderzh"
+
+  [Params.Disqus]
+    #ShortName = "samsonchen"
+
+  [Params.GoogleAnalytics]
+    #ID = ""
+
+  [Params.Strings]
+    Search = "搜索"
+    PageNotFound = "你访问的页面不存在"
+    ShowSideBar = "显示侧边栏"
+    HideSideBar = "隐藏侧边栏"
+    Categories = "分类"
+    Archive = "归档"
+    Tags = "标签"
+    TagCloud = "标签云"
+    Rss = "RSS 订阅"
+    TableOfContents = "文章目录"
+
+[Menu]
+  [[Menu.Main]]
+    Name = "首页"
+    URL = "/"
+    Weight = 1
+  [[Menu.Main]]
+    Name = "关于"
+    URL = "/about"
+    Weight = 2
