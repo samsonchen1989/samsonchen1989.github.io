@@ -2,17 +2,17 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>cocos2dx UI的一些碎碎念 - Gamer Cat</title>
+  <title>也谈No Man&#39;s Sky - Gamer Cat</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
   
-  <meta name="description" content="前言 一不小心也做了快两年游戏程序了，主程，我，服务器小哥三个程序996了一年多，自己主要做地图探索，陷阱机关的GamePlay，成就，和其他">
+  <meta name="description" content="如果二十年前有人说自己的游戏里面可以有18,446,744,073,709,551,616（其实就是2^64）颗不同的星球，每个星球有自己独">
   <meta name="author" content="samsonchen">
-  <meta itemprop="name" content="cocos2dx UI的一些碎碎念 - Gamer Cat">
-  <meta itemprop="description" content="前言 一不小心也做了快两年游戏程序了，主程，我，服务器小哥三个程序996了一年多，自己主要做地图探索，陷阱机关的GamePlay，成就，和其他">
+  <meta itemprop="name" content="也谈No Man&#39;s Sky - Gamer Cat">
+  <meta itemprop="description" content="如果二十年前有人说自己的游戏里面可以有18,446,744,073,709,551,616（其实就是2^64）颗不同的星球，每个星球有自己独">
   <meta itemprop="image" content="https://samsonchen1989.github.io/img/author.jpg">
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:site" content="@samsonchen_1989" />
-  <meta name="twitter:title" content="cocos2dx UI的一些碎碎念 - Gamer Cat" />
+  <meta name="twitter:title" content="也谈No Man&#39;s Sky - Gamer Cat" />
   
   <meta name="twitter:description" content="hehe">
   
@@ -63,7 +63,7 @@
 	<article itemprop="articleBody">
     <header class="article-info clearfix">
   <h1 itemprop="name">
-      <a href="https://samsonchen1989.github.io/post/blog1/" title="cocos2dx UI的一些碎碎念" itemprop="url">cocos2dx UI的一些碎碎念</a>
+      <a href="https://samsonchen1989.github.io/post/nms/" title="也谈No Man&#39;s Sky" itemprop="url">也谈No Man&#39;s Sky</a>
   </h1>
   <p class="article-author">By
     
@@ -71,119 +71,46 @@
     
   </p>
   <p class="article-time">
-    <time datetime="2016-07-28 23:00:12 &#43;0800 HKT" itemprop="datePublished">2016年07月28日</time>
+    <time datetime="2016-08-15 18:49:00 &#43;0800 HKT" itemprop="datePublished">2016年08月15日</time>
   </p>
 </header>
 
 	<div class="article-content">
     
-    
+    <p>如果二十年前有人说自己的游戏里面可以有18,446,744,073,709,551,616（其实就是<strong>2^64</strong>）颗不同的星球，每个星球有自己独特的地貌、环境、生物甚至独特的食物链，你一定会觉得他是被那些节奏诡异闪着《电子世界争霸战》癫狂游离光线的游戏闪傻了。不过2年前《No Man&rsquo;s Sky》在E3上展出的时候，没有人觉得这个是玩笑，只是有点将信将疑——这个当时还只有4个人的工作室<strong>Hello Games</strong>会把这款号称无限可能的游戏推到什么样的高度。</p>
 
-<h2 id="前言">前言</h2>
+<p>《No Man&rsquo;s Sky》初始版本才3.4个G，但丝毫不影响他模拟星球的能力。在强大的硬件机能支撑下，Procedural Generation变得离玩家越来越近。随着Rougelike类型游戏的流行，很多游戏中的关卡不再是一成不变只要背板就能通过，而是每次随机生成确保每次游戏都有独一无二的体验，比较典型的像《以撒的结合》关卡，但严格意义上来说市面上大部分的Rougelike游戏并不算纯粹的程序生成。依然需要关卡设计师来创造一些基本的地图，然后用伪随机的方式（参见以撒中的Seed）选取地图和怪物进行拼接和配置。</p>
 
-<p>一不小心也做了快两年游戏程序了，主程，我，服务器小哥三个程序996了一年多，自己主要做地图探索，陷阱机关的GamePlay，成就，和其他各式各样的纯UI系统。个人理想中的配置应该是三个客户端和两个服务器，可惜现实很骨感，小公司成本有限，基本都是谁有空就接着往下做，还要和主程抢服务器小哥做对接，不过也算有始有终，游戏总算上线稳定运行了。</p>
+<p>Unity里一种伪随机数的实现方式：</p>
 
-<p>小公司的工作是人驱动的，大公司是流程驱动的，各有利弊。以前在TP的时候，工作都是邮件驱动，产品部的发邮件给组长，一群人先文字讨论半天，然后把你加进来，可能只是改个字而已。现在策划提个简单的需求，只要喊一声，半个小时后就能做完出结果了，非常快捷，不需要走流程。当然弊端也有，比如缺乏记录和文档，可能过半年策划就记不起来自己当时为啥提这个需求了。规范化和流程化是必经之路，不过考虑到手游的开发周期，如何简化和平衡也是个问题。</p>
+<pre><code class="language-csharp">    // Unity params
+    public bool useRandomSeed;
 
-<p>我们的游戏Heroes Quest在加拿大测试的时候，正好遇到皇室战争上架，然后7月初正式全球上的时候，又遇到了Pokemon Go这种怪物，所以定发布日期也是一种学问啊<em>(:зゝ∠)</em>
-<a href="https://itunes.apple.com/app/id1118861621?mt=8">App Store链接</a>，<a href="https://play.google.com/store/apps/details?id=com.heroesquest.rpg">Google Play链接</a></p>
+    // When use pseudo random
+    if (useRandomSeed) {
+        seed = Time.time.ToString();
+    }
 
-<p>虽然作为一个Unity党，对cocos2dx不怎么感冒，不过自己的喜好并不能影响到工作，有一些基本的原则和技巧是独立于工具或者引擎的，因为之前的博客跟着到期的vps随风而去了，所以最近打算把以前的一些工作总结一下，把博客搬到Gihub来，也算是新开始吧。</p>
-
-<p>UI方面的工作比较碎，比较单调，但也有很多讲究，合理的UI设计可以节省很多DrawCall和CPU的开销，这里总结一些Tips。</p>
-
-<h2 id="需要时加载图集">需要时加载图集</h2>
-
-<p>为了节省DrawCall一般会把相同界面或者相同类型的图片用TexturePacker打包成一张整图，比如通用的UI框体，按钮可以打包成一个图集。在每个场景创建前，加载一些必用图集，然后看情况加载其他图集。</p>
-
-<p>尽量把不同的窗口做成不同的Layer或Node，每个窗口管理自己所需要的图集，避免无用图集占用内存，做到<strong>需要时加载</strong>。这点有点像Unity的<strong>组件化Component-Based</strong>思想，尽量把重复的部分（甚至不重复的部分，你永远不会想到策划哪天会突发奇想，复用某一块界面）独立，然后按需加载。</p>
-
-<table>
-<thead>
-<tr>
-<th>平台</th>
-<th>推荐图片格式</th>
-<th>推荐Pixel格式</th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>ios</td>
-<td><strong>pvr.ccz</strong></td>
-<td><strong>PVRTC4</strong></td>
-</tr>
-
-<tr>
-<td>Android</td>
-<td><strong>png和pvr.ccz</strong></td>
-<td><strong>RGBA8888,RGBA4444加抖动</strong></td>
-</tr>
-</tbody>
-</table>
-
-<p>非透明图片采用<strong>JPG+RGB565</strong></p>
-
-<p>详细的可以参考：
-1. <a href="http://blog.csdn.net/langresser_king/article/details/8426708">iOS和android游戏纹理优化和内存优化(cocos2d-x)</a>
-2. <a href="http://www.cocos.com/doc/tutorial/show?id=2902">浅谈Cocos2d-x纹理优化</a></p>
-
-<h2 id="利用cache实现-只创建一次原则">利用Cache实现“只创建一次原则”</h2>
-
-<p>一个稍微复杂的界面里，各个标签切换可能会产生大量的重复的Button、Label或者自定义Node，利用Cache把它们存储起来进行重复利用，可以减少明显的卡顿和不必要的GC。
-一个Lua的简单实现：</p>
-
-<pre><code class="language-lua">self.buttonCache = {
-    buttonTable = {},
-    index = 1,
-    getButton = function()
-        local index = self.buttonCache.index
-        local button = self.buttonCache.buttonTable[index]
-        if button then
-            button:show()
-        else
-            button = WidgetHelper.quickItemWidget()
-                :retain()
-                :setAnchorPoint(0.5,0.5)
-                :setTouchEnabled(true)
-                :onTouch(handler(self,function(self,event) end))
-
-            self.buttonCache.buttonTable[index] = button
-        end
-
-        self.buttonCache.index = self.buttonCache.index + 1
-        return button
-    end,
-
-    recycleButton = function()
-        for k,v in pairs(self.buttonCache.buttonTable) do
-            v:removeFromParent()
-            v:hide()
-        end
-
-        self.buttonCache.index = 1
-    end,
-
-    releaseButton = function()
-        for k,v in pairs(self.buttonCache.buttonTable) do
-            v:release()
-        end
-    end,
-}
+    System.Random pseudoRandom = new System.Random(seed.GetHashCode());
+    // In a loop
+    for () {
+        pseudoRandom.Next(0,100)
+    }
 </code></pre>
 
-<p>获取Button的时候只用调用<strong>getButton()</strong>，在切换标签或清空列表时调用<strong>recycleButton()</strong>回收Button并重新计数，在退出Scene的时候调用<strong>releaseButton()</strong>清除Cache。</p>
+<p>《No Man&rsquo;s Sky》把Procedural Generation在游戏中的应用又提升到一个新的高度，大到星球的地表，小到生物的音效，全部都是由程序按照一定的规则生成。在大部分的Procedural Generation实验里，这些规则都是无序或者散乱的，但是在无人深空里，这套规则，按照制作组的野心，就是尽量模拟靠近宇宙自然的规则，从气候-&gt;资源-&gt;地形-&gt;食物链-&gt;生物，一层以一层为基础迭代而来，这才形成了一个独一无二的星球。</p>
 
-<p>不单单是Button，任何重复的组件都可以用类似的格式进行Cache存储和重复利用，可以节省一大笔创建和销毁的开销。
-需要注意的是，Cache中的元素，在重复利用时要做好检查，避免出现重复添加子节点，Enable状态没有重置等问题。</p>
+<p>当然，野心归野心，从技术角度，NMS的完成度是比较高和有先驱性的，但是作为一个游戏，把所有的生成交给电脑，玩家会有意外的惊喜，但也容易被可能重复的内容磨掉兴趣，让他们觉得“都是套路”。毕竟规则是有限的，有很多人喜欢设计出的惊喜和设计出的情绪调动，而不喜欢冷冰冰的电脑。</p>
 
-<h2 id="提供统一的ui控件创建接口">提供统一的UI控件创建接口</h2>
+<p>从目前的评测来看，NMS的Procedural Generation主要集中在图形和音效上，但在系统和AI上没有什么建树，贸易系统和NPC系统都很初级，喜欢玩太空4X类游戏的人估计也没法再这个游戏里找到自己的点，因为他只有eXplore和eXploit，却没有eXpand和eXterminate。</p>
 
-<p>游戏中最常见的组件，物品道具Button，TTFLabel文本，HtmlLabel文本，RichText文本，采用统一的接口创建。保持格式统一，减少重复代码。特别是物品Button，一般是一个Button底加Icon Sprite加数量Label的组合，提供一个统一接口，处理不同Item的样式，比如装备的彩色底框，碎片的角标，人物头像的星级等等，做到传入一个Item ID和Type，就能产生相应的Button。</p>
+<p>说到底，这个游戏只是一个程序员们的自然模拟实验，被过于放在聚光灯和舆论中曝光了。战斗，交易，飞船只是附属品，这个游戏的核心在于探索，但大部分人并不在意自己能发现啥，也没有耐心细细地探索每个世界。这个游戏并不适合所有的玩家，这个纯粹由程序和数学构建的游戏，没有刻意的包装和讨好，就像一杯纯净水，拥有无限的形态和可能性，但不可口。</p>
 
-<h2 id="延时加载">延时加载</h2>
+<p>按照现在3A游戏的开发成本和已经不像以前那样饥不择食的玩家，纯PVE和关卡设计的游戏越来越捉襟见肘<del>如果能达到像Limbo和Inside那种设计高度当我没说</del>PVP（守望屁股），Rougelike（以撒），类Minecraft和Procedural Generation（无人深空）类型的游戏更容易脱颖而出。很多人说NMS吹牛吹破了天，我倒觉得从4个人到20个人，Hello Game小作坊能花三年做到这样的完成度，已经很了不起了。在技术的实验探索上，也不知道比国内某些冷嘲热讽的开发者高到哪里去。</p>
 
-<p>有时候运气比较背，一个列表里面要加载几十个子Node，每个Node上还都有动画和各种子Node，全部添加完需要2s左右，卡顿明显，除了怂恿策划美术改图之外，延时加载也是一个解决办法——不要等列表子Node加载完再显示，先显示列表，开一个计时器，每隔0.1s~0.2s添加一个子Node，在完全加载完前禁用用户交互，虽然时间差不多，但效果要明显好于让用户卡个几秒。</p>
+<p>这里有一篇比较专业的评测，有兴趣可以看看：<a href="http://www.makeuseof.com/tag/no-mans-sky-future-procedural-games/">No Man’s Sky and the Future of Procedural Games</a></p>
+
+<p>这位大哥受无人深空启发，做了一个<a href="https://marian42.github.io/proceduralart/">2D的星球版画生成器</a>。</p>
 
 	</div>
   <footer class="article-footer clearfix">
@@ -192,7 +119,7 @@
 
 
   <div class="article-share" id="share">
-    <div data-url="https://samsonchen1989.github.io/post/blog1/" data-title="cocos2dx UI的一些碎碎念" data-tsina="" class="share clearfix">
+    <div data-url="https://samsonchen1989.github.io/post/nms/" data-title="也谈No Man&#39;s Sky" data-tsina="" class="share clearfix">
     </div>
   </div>
 </footer>
@@ -208,8 +135,8 @@
 
 
 var disqus_config = function () {
-this.page.url = "https://samsonchen1989.github.io/post/blog1/";
-this.page.identifier = "https://samsonchen1989.github.io/post/blog1/";
+this.page.url = "https://samsonchen1989.github.io/post/nms/";
+this.page.identifier = "https://samsonchen1989.github.io/post/nms/";
 };
 (function() { 
 var d = document, s = d.createElement('script');
