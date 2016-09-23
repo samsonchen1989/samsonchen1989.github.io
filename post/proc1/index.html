@@ -2,17 +2,17 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>也谈No Man&#39;s Sky - Gamer Cat</title>
+  <title>程序生成地下城/洞穴(1) #整理 #翻译 #Unity - Gamer Cat</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
   
-  <meta name="description" content="如果二十年前有人说自己的游戏里面可以有18,446,744,073,709,551,616（其实就是2^64）颗不同的星球，每个星球有自己独">
+  <meta name="description" content="前言 原始资料是油管上的视频教程，链接戳我，播主是南非小哥Sebastian Lague，专门在油管上做Procedural Generation">
   <meta name="author" content="samsonchen">
-  <meta itemprop="name" content="也谈No Man&#39;s Sky - Gamer Cat">
-  <meta itemprop="description" content="如果二十年前有人说自己的游戏里面可以有18,446,744,073,709,551,616（其实就是2^64）颗不同的星球，每个星球有自己独">
+  <meta itemprop="name" content="程序生成地下城/洞穴(1) #整理 #翻译 #Unity - Gamer Cat">
+  <meta itemprop="description" content="前言 原始资料是油管上的视频教程，链接戳我，播主是南非小哥Sebastian Lague，专门在油管上做Procedural Generation">
   <meta itemprop="image" content="https://samsonchen1989.github.io/img/author.jpg">
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:site" content="@samsonchen_1989" />
-  <meta name="twitter:title" content="也谈No Man&#39;s Sky - Gamer Cat" />
+  <meta name="twitter:title" content="程序生成地下城/洞穴(1) #整理 #翻译 #Unity - Gamer Cat" />
   
   <meta name="twitter:description" content="hehe">
   
@@ -63,7 +63,7 @@
 	<article itemprop="articleBody">
     <header class="article-info clearfix">
   <h1 itemprop="name">
-      <a href="https://samsonchen1989.github.io/post/nms/" title="也谈No Man&#39;s Sky" itemprop="url">也谈No Man&#39;s Sky</a>
+      <a href="https://samsonchen1989.github.io/post/proc1/" title="程序生成地下城/洞穴(1) #整理 #翻译 #Unity" itemprop="url">程序生成地下城/洞穴(1) #整理 #翻译 #Unity</a>
   </h1>
   <p class="article-author">By
     
@@ -71,46 +71,148 @@
     
   </p>
   <p class="article-time">
-    <time datetime="2016-08-15 18:49:00 &#43;0800 HKT" itemprop="datePublished">2016年08月15日</time>
+    <time datetime="2016-09-23 09:19:43 &#43;0800 HKT" itemprop="datePublished">2016年09月23日</time>
   </p>
 </header>
 
 	<div class="article-content">
     
-    <p>如果二十年前有人说自己的游戏里面可以有18,446,744,073,709,551,616（其实就是<strong>2^64</strong>）颗不同的星球，每个星球有自己独特的地貌、环境、生物甚至独特的食物链，你一定会觉得他是被那些节奏诡异闪着《电子世界争霸战》癫狂游离光线的游戏闪傻了。不过2年前《No Man&rsquo;s Sky》在E3上展出的时候，没有人觉得这个是玩笑，只是有点将信将疑——这个当时还只有4个人的工作室<strong>Hello Games</strong>会把这款号称无限可能的游戏推到什么样的高度。</p>
+    
 
-<p>《No Man&rsquo;s Sky》初始版本才3.4个G，但丝毫不影响他模拟星球的能力。在强大的硬件机能支撑下，Procedural Generation变得离玩家越来越近。随着Rougelike类型游戏的流行，很多游戏中的关卡不再是一成不变只要背板就能通过，而是每次随机生成确保每次游戏都有独一无二的体验，比较典型的像《以撒的结合》关卡，但严格意义上来说市面上大部分的Rougelike游戏并不算纯粹的程序生成。依然需要关卡设计师来创造一些基本的地图，然后用伪随机的方式（参见以撒中的Seed）选取地图和怪物进行拼接和配置。</p>
+<h2 id="前言">前言</h2>
 
-<p>Unity里一种伪随机数的实现方式：</p>
+<p>原始资料是油管上的视频教程，<a href="https://www.youtube.com/playlist?list=PLFt_AvWsXl0eZgMK_DT5_biRkWXftAOf9">链接戳我</a>，播主是南非小哥<a href="https://twitter.com/SebastianLague">Sebastian Lague</a>，专门在油管上做Procedural Generation和Unity的相关教程视频。Unity官方也把这个系列加到了<a href="https://unity3d.com/learn/tutorials/projects/procedural-cave-generation-tutorial">推荐教程中</a>。&rdquo;Procedural Cave Generation&rdquo;这个系列已经完结，自己跟着后面做了一遍，收获颇多，这里做个整理和翻译，也算帮助自己理解。他还有一个正在连载的系列“Landmass Generation”，动态生成3D Terrain，等完结了也可以考虑做个整理。
+这个整理以理解和介绍背景知识为主，会贴部分代码，想看详细代码的可以看他的<a href="https://github.com/SebLague/Procedural-Cave-Generation">Github项目主页</a>。部分代码小哥是一笔带过，可能看完你知道怎么做，但为什么这么做理解起来可能有些困难，我也尽量找出相关资料辅助理解，Let&rsquo;s Start!</p>
 
-<pre><code class="language-csharp">    // Unity params
-    public bool useRandomSeed;
+<h2 id="cellular-automata-细胞自动机">Cellular automata(细胞自动机)</h2>
 
-    // When use pseudo random
+<p>Cellular Automata最早是冯诺曼依大爷提出的离散数学模型，详细的信息可以参考<a href="https://en.wikipedia.org/wiki/Cellular_automaton">Wiki</a>，在洞穴生成里面我们只需要借鉴这个模型的三个特点：</p>
+
+<ol>
+<li>一个由多个格子Cell组成的N维网格（这里只要用到2维网格）</li>
+<li>每格Cell状态有限（这里只取两个状态，每格值是0-空地，或者1-墙）</li>
+<li>网格按照某种规则演变，每格Cell状态变化受周围格子状态的影响而变化</li>
+</ol>
+
+<p>背景知识就介绍这么多，接下来开始一步步实现。</p>
+
+<h2 id="随机生成2维网格">随机生成2维网格</h2>
+
+<p>根据上面介绍的Cellular automata第一和第二条规则，在Unity中建立一个脚本&rdquo;MapGenerator&rdquo;负责二维网格的实现。</p>
+
+<pre><code class="language-csharp">public int width;
+public int height;
+
+public string seed;
+public bool useRandomSeed;
+
+[Range(0,100)]
+public int randomFillPercent;
+
+int[,] map;
+</code></pre>
+
+<p>width和height为可设置的地图大小。生成地图的规则也很简单，设置一个randomFillPercent值，对每一点进行遍历，随机取值，如果小于randomFillPercent，将该点设置为1，否则设置为0。一般设置randomFillPercent为50左右。
+考虑到有时候我们需要能够存储和重新生成相同的地图，所以在初始化网格时并不是完全随机，而是设置一个seed，进行伪随机生成。</p>
+
+<pre><code class="language-csharp">void RandomFillMap() {
     if (useRandomSeed) {
         seed = Time.time.ToString();
     }
 
     System.Random pseudoRandom = new System.Random(seed.GetHashCode());
-    // In a loop
-    for () {
-        pseudoRandom.Next(0,100)
+
+    for (int x = 0; x &lt; width; x ++) {
+        for (int y = 0; y &lt; height; y ++) {
+            if (x == 0 || x == width-1 || y == 0 || y == height -1) {
+                map[x,y] = 1; //设置边缘固定为墙
+            } else {
+                map[x,y] = (pseudoRandom.Next(0,100) &lt; randomFillPercent)? 1 : 0;
+            }
+        }
     }
+}
 </code></pre>
 
-<p>《No Man&rsquo;s Sky》把Procedural Generation在游戏中的应用又提升到一个新的高度，大到星球的地表，小到生物的音效，全部都是由程序按照一定的规则生成。在大部分的Procedural Generation实验里，这些规则都是无序或者散乱的，但是在无人深空里，这套规则，按照制作组的野心，就是尽量模拟靠近宇宙自然的规则，从气候-&gt;资源-&gt;地形-&gt;食物链-&gt;生物，一层以一层为基础迭代而来，这才形成了一个独一无二的星球。</p>
+<p><img src="/img/pic2.jpg" alt="" />
+首次生成的图可能是这个样子，别着急，接下来根据Cellular Automata的第三个特征处理网格。</p>
 
-<p>当然，野心归野心，从技术角度，NMS的完成度是比较高和有先驱性的，但是作为一个游戏，把所有的生成交给电脑，玩家会有意外的惊喜，但也容易被可能重复的内容磨掉兴趣，让他们觉得“都是套路”。毕竟规则是有限的，有很多人喜欢设计出的惊喜和设计出的情绪调动，而不喜欢冷冰冰的电脑。</p>
+<h2 id="应用规则处理网格">应用规则处理网格</h2>
 
-<p>从目前的评测来看，NMS的Procedural Generation主要集中在图形和音效上，但在系统和AI上没有什么建树，贸易系统和NPC系统都很初级，喜欢玩太空4X类游戏的人估计也没法再这个游戏里找到自己的点，因为他只有eXplore和eXploit，却没有eXpand和eXterminate。</p>
+<p>Cellular Automata网格的处理规则并不是固定的，比较经典的如<a href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life">Conway&rsquo;s Game of Life生命游戏的规则</a>，不过我们这里处理规则比较简单：</p>
 
-<p>说到底，这个游戏只是一个程序员们的自然模拟实验，被过于放在聚光灯和舆论中曝光了。战斗，交易，飞船只是附属品，这个游戏的核心在于探索，但大部分人并不在意自己能发现啥，也没有耐心细细地探索每个世界。这个游戏并不适合所有的玩家，这个纯粹由程序和数学构建的游戏，没有刻意的包装和讨好，就像一杯纯净水，拥有无限的形态和可能性，但不可口。</p>
+<ol>
+<li>统计当前格子Cell周围8个网格状态为1（墙）的总和S</li>
+<li>如果S大于4，则把Cell设为1。如果S小于4，则把Cell设为0。</li>
+<li>如果S等于4，则Cell值保持不变。</li>
+</ol>
 
-<p>按照现在3A游戏的开发成本和已经不像以前那样饥不择食的玩家，纯PVE和关卡设计的游戏越来越捉襟见肘<del>如果能达到像Limbo和Inside那种设计高度当我没说</del>PVP（守望屁股），Rougelike（以撒），类Minecraft和Procedural Generation（无人深空）类型的游戏更容易脱颖而出。很多人说NMS吹牛吹破了天，我倒觉得从4个人到20个人，Hello Game小作坊能花三年做到这样的完成度，已经很了不起了。在技术的实验探索上，也不知道比国内某些冷嘲热讽的开发者高到哪里去。</p>
+<pre><code class="language-csharp">void SmoothMap() {
+    for (int x = 0; x &lt; width; x ++) {
+        for (int y = 0; y &lt; height; y ++) {
+            int neighbourWallTiles = GetSurroundingWallCount(x,y);
 
-<p>这里有一篇比较专业的评测，有兴趣可以看看：<a href="http://www.makeuseof.com/tag/no-mans-sky-future-procedural-games/">No Man’s Sky and the Future of Procedural Games</a></p>
+            if (neighbourWallTiles &gt; 4)
+                map[x,y] = 1;
+            else if (neighbourWallTiles &lt; 4)
+                map[x,y] = 0;
 
-<p>这位大哥受无人深空启发，做了一个<a href="https://marian42.github.io/proceduralart/">2D的星球版画生成器</a>。</p>
+        }
+    }
+}
+
+int GetSurroundingWallCount(int gridX, int gridY) {
+    int wallCount = 0;
+    for (int neighbourX = gridX - 1; neighbourX &lt;= gridX + 1; neighbourX ++) {
+        for (int neighbourY = gridY - 1; neighbourY &lt;= gridY + 1; neighbourY ++) {
+            if (IsInMapRange(neighbourX, neighbourY)) {
+                // 统计周围8个点的情况，请参考Moore neighborhood(https://en.wikipedia.org/wiki/Moore_neighborhood)
+                if (neighbourX != gridX || neighbourY != gridY) {
+                    wallCount += map[neighbourX, neighbourY];
+                }
+            }
+            else {
+                wallCount ++;
+            }
+        }
+    }
+
+    return wallCount;
+}
+</code></pre>
+
+<p>循环上述步骤<strong>5</strong>次，可以看到地图的变化如下：
+<img src="/img/pic1.jpg" alt="可以看到整个网格变得越来越聚拢规整" />
+如果你对其他处理规则感兴趣，可以查阅下面两个链接：</p>
+
+<p>1.<a href="https://gamedevelopment.tutsplus.com/tutorials/generate-random-cave-levels-using-cellular-automata--gamedev-9664">Generate Random Cave Levels Using Cellular Automata</a></p>
+
+<p>2.<a href="https://www.raywenderlich.com/66062/procedural-level-generation-games-using-cellular-automaton-part-1">Procedural Level Generation in Games using a Cellular Automaton</a></p>
+
+<p>规则是先设定一个DeathLimit（如3）和BirthLimit（如4）：</p>
+
+<ol>
+<li>统计当前Cell周围为1（墙）的值S</li>
+<li>如果Cell为1（墙），S值小于DeathLimit，则设置Cell为0</li>
+<li>如果Cell为0（空地），S值大于BirthLimit，则设Cell为1</li>
+</ol>
+
+<h2 id="需要解决的问题">需要解决的问题</h2>
+
+<p>虽然目前可以生成一个卖相不错的地图，但还存留一些问题：</p>
+
+<ol>
+<li>地图中依然存在小块的空地集合或墙集合。</li>
+<li>大块的空地并不确保互相连通。</li>
+</ol>
+
+<p>要解决这两个问题，可以参考下面这篇文章，在生成规则上做一些优化</p>
+
+<p><a href="http://www.roguebasin.com/index.php?title=Cellular_Automata_Method_for_Generating_Random_Cave-Like_Levels">Cellular Automata Method for Generating Random Cave-Like Levels</a></p>
+
+<p>也可以参考Procedural Cave Generation这个系列教程里，Sebastian小哥引入的“房间Room”的概念，去除过小的房间，然后对空房间进行连接，这个是part2要讲的部分。</p>
+
+<p><em>注：原始教程中，讲完本文的内容，Sebastian小哥先去讲了怎么在Unity里生成二维网格的Mesh，然后再回头讲房间连接，这里我先换个顺序，把和网格处理相关的内容一块说了，再把Mesh生成放到最后说。</em></p>
 
 	</div>
   <footer class="article-footer clearfix">
@@ -119,7 +221,7 @@
 
 
   <div class="article-share" id="share">
-    <div data-url="https://samsonchen1989.github.io/post/nms/" data-title="也谈No Man&#39;s Sky" data-tsina="" class="share clearfix">
+    <div data-url="https://samsonchen1989.github.io/post/proc1/" data-title="程序生成地下城/洞穴(1) #整理 #翻译 #Unity" data-tsina="" class="share clearfix">
     </div>
   </div>
 </footer>
@@ -135,8 +237,8 @@
 
 
 var disqus_config = function () {
-this.page.url = "https://samsonchen1989.github.io/post/nms/";
-this.page.identifier = "https://samsonchen1989.github.io/post/nms/";
+this.page.url = "https://samsonchen1989.github.io/post/proc1/";
+this.page.identifier = "https://samsonchen1989.github.io/post/proc1/";
 };
 (function() { 
 var d = document, s = d.createElement('script');
