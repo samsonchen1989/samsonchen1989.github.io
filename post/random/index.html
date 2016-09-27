@@ -1,0 +1,594 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>从Dota2的伪随机谈开 - Gamer Cat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+  
+  <meta name="description" content="起因是在知乎上看到木七七工作室转发的谈随机处理的一个内部视频，木七七本来是一个做Flash游戏分享和页游的公司，跟着手游浪潮，把旗下的《像素">
+  <meta name="author" content="samsonchen">
+  <meta itemprop="name" content="从Dota2的伪随机谈开 - Gamer Cat">
+  <meta itemprop="description" content="起因是在知乎上看到木七七工作室转发的谈随机处理的一个内部视频，木七七本来是一个做Flash游戏分享和页游的公司，跟着手游浪潮，把旗下的《像素">
+  <meta itemprop="image" content="https://samsonchen1989.github.io/img/author.jpg">
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:site" content="@samsonchen_1989" />
+  <meta name="twitter:title" content="从Dota2的伪随机谈开 - Gamer Cat" />
+  
+  <meta name="twitter:description" content="hehe">
+  
+  <link rel="shortcut icon" href="https://samsonchen1989.github.io/img/favicon.ico"/>
+  <link rel="apple-touch-icon" href="https://samsonchen1989.github.io/apple-touch-icon.png" />
+  <link rel="apple-touch-icon-precomposed" href="https://samsonchen1989.github.io/apple-touch-icon.png" />
+  <link rel="stylesheet" href="https://samsonchen1989.github.io/highlight/styles/github.css">
+  <script src="https://samsonchen1989.github.io/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <link rel="stylesheet" href="https://samsonchen1989.github.io/font/hack/css/hack.min.css">
+  <link rel="stylesheet" href="https://samsonchen1989.github.io/css/style.css">
+</head>
+
+<body>
+  <header>
+    <div>
+  
+  <div id="imglogo">
+    <a href="https://samsonchen1989.github.io/"><img src="https://samsonchen1989.github.io/img/logo.svg" alt="Gamer Cat" title="Gamer Cat"/></a>
+  </div>
+  
+  <div id="textlogo">
+    <h1 class="site-name"><a href="https://samsonchen1989.github.io/" title="Gamer Cat">Gamer Cat</a></h1>
+    <h2 class="blog-motto">偶尔码字和写代码，大部分时间都在睡觉😪和玩PS4的懒猫</h2>
+  </div>
+  <div class="navbar"><a class="navbutton navmobile" href="#" title="menu"></a></div>
+  <nav class="animated">
+    <ul>
+      
+      <li><a href="/">首页</a></li>
+      
+      <li><a href="/about">关于</a></li>
+      
+      <li>
+        <form class="search" method="get" action="https://www.google.com/search">
+          <div>
+            <input type="text" id="search" name="q" placeholder="搜索">
+          </div>
+        </form>
+      </li>
+    </ul>
+  </nav>
+</div>
+
+  </header>
+  <div id="container">
+    <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody">
+    <header class="article-info clearfix">
+  <h1 itemprop="name">
+      <a href="https://samsonchen1989.github.io/post/random/" title="从Dota2的伪随机谈开" itemprop="url">从Dota2的伪随机谈开</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="https://samsonchen1989.github.io/" title="samsonchen">samsonchen</a>
+    
+  </p>
+  <p class="article-time">
+    <time datetime="2016-09-27 17:27:36 &#43;0800 HKT" itemprop="datePublished">2016年09月27日</time>
+  </p>
+</header>
+
+	<div class="article-content">
+    
+    
+
+<p>起因是在知乎上看到木七七工作室转发的<a href="https://zhuanlan.zhihu.com/p/22630963">谈随机处理的一个内部视频</a>，木七七本来是一个做Flash游戏分享和页游的公司，跟着手游浪潮，把旗下的《像素骑士团》改头换面成手游版《冒险与挖矿》大获成功（虽然有角川书店的正版授权，但游戏内容大部分打的都是集英社，讲谈社的擦边球，比如鸣人改名成吊车尾少年，后期版本还改了颜色避嫌）。不谈这些八卦，毕竟在国内要找不偷腥的猫还是很困难的，mu77知乎上的专栏从运营到策划，还是干货满满，推荐有兴趣的人关注下。</p>
+
+<p>视频里面聊到Dota2的技能概率处理方式，比如大鱼人（Sorry好久没玩Dota了已经想不起来这位的真名）的被动技能升满后：</p>
+
+<ul>
+<li>每次攻击有25%的几率让敌人眩晕。</li>
+</ul>
+
+<p>一般做法用<strong>纯随机 True random distribution</strong>的方式，每次攻击时计算概率，独立判断是否触发眩晕。不过可能会出现一些体验问题：</p>
+
+<ol>
+<li>因为每次独立计算概率，极限情况会导致一直触发眩晕和一直不触发，间接造成欧皇和非洲酋长之间的战争。</li>
+<li>从玩家体验上来说，感官上25%的几率，超过5，6次不触发，他就会开始怀疑几率是否被策划运营篡改，幕后是否有肮脏的PY交易，而不是回想下初中的数学课。</li>
+</ol>
+
+<p>纯随机在数学上是无罪的，机器底层的随机函数是清白的（其实也不是那么清白，毕竟<strong>纯随机是不存在的</strong>，不过这个就扯深了，先默认一般的random接口函数就是纯随机），但是有些时候并不是最佳解决方案。</p>
+
+<h3 id="用伪随机分布pseudo-random-distribution处理概率">用伪随机分布Pseudo-random distribution处理概率</h3>
+
+<p>Dota2的伪随机分布采用概率补偿的方式，每次触发概率从一个值开始递增，第N次的触发概率P(N) = C * N，比如25%的几率，C值大概为8.5%，运算流程如下：</p>
+
+<ol>
+<li>第一次触发眩晕概率为8.5%</li>
+<li>第二次为17%，以此类推递增</li>
+<li>如果触发眩晕成功，则概率重新从8.5%开始递增计算。</li>
+</ol>
+
+<p>这种方式使得连续触发或连续不触发的几率降低，避免了运气成分过于影响战斗结果（特别是竞技游戏）。</p>
+
+<p>一般几率对应的C值可以参考下面这张图。P(T)代表预期值，就是游戏中显示的几率值。P(A)是用了伪随机后的实际概率。MaxN表示最坏情况下触发概率的次数。</p>
+
+<p><img src="/img/rpic1.png" alt="" /></p>
+
+<p>计算C值的方式和程序实现可以参考<a href="http://gaming.stackexchange.com/questions/161430/calculating-the-constant-c-in-dota-2-pseudo-random-distribution">这个链接</a>下的回答，有C#的实现代码：</p>
+
+<pre><code class="language-csharp">//CfromP是主函数，传入理论概率P就可以求得递增的C值
+public decimal CfromP( decimal p )
+{
+    decimal Cupper = p;
+    decimal Clower = 0m;
+    decimal Cmid;
+    decimal p1;
+    decimal p2 = 1m;
+    while(true)
+    {
+        Cmid = ( Cupper + Clower ) / 2m;
+        p1 = PfromC( Cmid );
+        if ( Math.Abs( p1 - p2 ) &lt;= 0m ) break;
+
+        if ( p1 &gt; p )
+        {
+            Cupper = Cmid;
+        }
+        else
+        {
+            Clower = Cmid;
+        }
+
+        p2 = p1;
+    }
+
+    return Cmid;
+}
+
+private decimal PfromC( decimal C )
+{
+    decimal pProcOnN = 0m;
+    decimal pProcByN = 0m;
+    decimal sumNpProcOnN = 0m;
+
+    int maxFails = (int)Math.Ceiling( 1m / C );
+    for (int N = 1; N &lt;= maxFails; ++N)
+    {
+        pProcOnN = Math.Min( 1m, N * C ) * (1m - pProcByN);
+        pProcByN += pProcOnN;
+        sumNpProcOnN += N * pProcOnN;
+    }
+
+    return ( 1m / sumNpProcOnN );
+}
+</code></pre>
+
+<p>上面的伪随机分布算是用概率补偿的方式控制概率来改善玩家的体验，详细的可以参考<a href="http://dota2.gamepedia.com/Pseudo-random_distribution">Dota2的Wiki</a>（打Dota2，向冰蛙学数学）。</p>
+
+<p>当然也有其他方式控制随机数和概率，正好前一阵子看了一个<a href="http://www.redblobgames.com/articles/probability/damage-rolls.html">从D&amp;D掷骰角度谈控制随机分布</a>的文章，下面也算一个翻译和整理。</p>
+
+<h3 id="我这把可是1d2有毒的飞刀">我这把可是1d2有毒的飞刀</h3>
+
+<p>D&amp;D里面<strong>NdS</strong>表示投掷S面的骰子N次，累加结果。比如1d12表示投掷一个12面骰子一次，3d4表示投掷一个4面骰子3次。</p>
+
+<p>假设我们要获取[0,24]之间的随机值，可以先设置一个函数rollDice(N, S)来模拟骰子投掷：</p>
+
+<pre><code class="language-csharp">public static int rollDice(int N, int S) {
+    int value = 0;
+    for (int i = 0; i &lt; N; i++) {
+        //每次随机结果为[0, S]
+        value += Random.Range(0, S + 1);
+    }
+
+    return value;
+}
+</code></pre>
+
+<p>我们可以rollDice(1,24)，也可以拆分成2次，变成rollDice(2,12)，变成两次[0,12]的和，以此类推rollDice(3,8)、rollDice(4,6)，下面这张图可以看到最终结果的分布变化：</p>
+
+<p><img src="/img/rpic5.jpg" alt="" /></p>
+
+<p>可以看到投掷的次数越多，最终结果分布就越集中在[0,24]的平均值附近，所以4d6的武器比3d8的武器输出更平稳，但3d8的武器造成高伤害的几率也更高。</p>
+
+<p>除了控制随机取值的集中区域，我们还可以用简单的方式控制随机取值是<strong>大部分分散在平均值以下</strong>还是<strong>大部分分散在平均值以上</strong>。</p>
+
+<h5 id="两次随机取较大-较小值">两次随机取较大/较小值</h5>
+
+<p>还是以取[0,24]之间随机值为例，每次rollDice(2,12)两次，取较大值：</p>
+
+<pre><code class="language-csharp">int roll1 = rollDice(2, 12);
+int roll2 = rollDice(2, 12);
+int result = Math.Max(roll1,  roll2);
+</code></pre>
+
+<p>分布图如下：</p>
+
+<p><img src="/img/rpic2.png" alt="" /></p>
+
+<p>反过来，取较小值，可以获得集中在平均值以下的分布：</p>
+
+<pre><code class="language-chsarp">int roll1 = rollDice(2, 12)
+int roll2 = rollDice(2, 12)
+int result = Math.Min(roll1, roll2);
+</code></pre>
+
+<p><img src="/img/rpic4.png" alt="" /></p>
+
+<p>取较小值在计算伤害值比较常见，比如一个角色的攻击力在20到40之间，利用这种方法可以使得最后结果集中在较低的范围，高伤害出现的几率较低。</p>
+
+<h5 id="三次随机取较大的两个值">三次随机取较大的两个值</h5>
+
+<p>rollDice(1,12)三次，取较大的两个值：</p>
+
+<pre><code class="language-chsarp">int roll1 = rollDice(1, 12);
+int roll2 = rollDice(1, 12);
+int roll3 = rollDice(1, 12);
+
+int result = roll1 + roll2 + roll3;
+result = result - Math.Min(roll1, roll2, roll3);
+</code></pre>
+
+<p>分布图如下：</p>
+
+<p><img src="/img/rpic3.png" alt="" /></p>
+
+<p>可以看出比两次取较大/较小值分布更为平滑。</p>
+
+<p>总结一下，可以看到在控制某个范围内随机数时，可以从下面几个角度进行自定义以满足需求：</p>
+
+<ol>
+<li><strong>范围</strong>。确定随机范围的最大值和最小值，如果需要可以做一些偏移，比如[20, 30]可以分解为20 + rollDice(1, 10)。</li>
+<li><strong>方差</strong>。将一次随机分解为多次随机，可以使结果更靠近中间值。相反，次数越少，结果分布范围越广。</li>
+<li><strong>不对称性</strong>。可以通过上面介绍的两种方法，使随机结果更多分布在平均值之前或者之后。</li>
+</ol>
+
+<h3 id="自定义概率分布">自定义概率分布</h3>
+
+<p>很多情况下，策划过来找你的时候，情景有可能是：我这里有10种掉落物品，每种的掉率我都想单独配置，比如A掉率10%，B掉率20%等等和一个Excel文件。</p>
+
+<p>最终的配置文件可能是像这样一个数组，前面是掉率（以100算100%），后面跟着物品ID。</p>
+
+<pre><code class="language-lua">local dropRate = {
+    {10, 100001},
+    {20, 100002},
+    {30, 100003},
+    {40, 100004},
+}
+</code></pre>
+
+<p>掉率的总和不一定正好是100，毕竟要考虑些对配置文件的容错性，所以先算出概率和sumRate，取random(sumRate)的值value，依次遍历dropDate表，累加概率和weight，如果value小于等于weight，则算是落在当前区间，返回对应的物品ID。我用lua写了一段测试代码，毕竟lua的table实在是太方便了。</p>
+
+<pre><code class="language-lua">local dropRate = {
+    {10, 100001},
+    {20, 100002},
+    {30, 100003},
+    {40, 100004},
+}
+
+local distribute = {
+    [100001] = 0,
+    [100002] = 0,
+    [100003] = 0,
+    [100004] = 0,
+}
+
+local checkRate = function(t, value)
+    local weight = 0
+    for i=1,#t do
+        weight = weight + t[i][1]
+        if value &lt;= weight then
+            return t[i][2]
+        end
+    end
+
+    return nil
+end
+
+local getDropItem = function(t)
+    local weightTotal = 0
+    for k,v in pairs(t) do
+        weightTotal = weightTotal + v[1]
+    end
+
+    local value = math.random(weightTotal)
+
+    return checkRate(t, value)
+end
+
+local main = function()
+    --用倒序时间设置random的seed，确保seed随时间显著变化
+    math.randomseed(tostring(os.time()):reverse():sub(1, 6))
+
+    for i=1,10000 do
+        local id = getDropItem(dropRate)
+        if id and distribute[id] then
+            distribute[id] = distribute[id] + 1
+        end
+    end
+
+    for index,dis in pairs(distribute) do
+        print(&quot;index:&quot;,index)
+        print(&quot;dis:&quot;,dis)
+        print(&quot;percent:&quot;,dis / 10000)
+        print(&quot;=================&quot;)
+    end
+end
+
+main()
+</code></pre>
+
+<p>测试结果和配置概率很接近，这样就可以让策划尽情发挥他的奇怪掉率了。</p>
+
+<p>###总结</p>
+
+<p>上面的部分只是最近看到的一些有意思的随机数讨论整理，真正在实际项目中，随机数的处理是跟随不同的需求做变化的，随机可以增加游戏过程的乐趣，可以给游戏增加卖点，也可以变成各种“坑”，对于开发来说，只要这个坑是可控制的，不要坑到自己就行了~</p>
+
+	</div>
+  <footer class="article-footer clearfix">
+  
+
+
+
+  <div class="article-share" id="share">
+    <div data-url="https://samsonchen1989.github.io/post/random/" data-title="从Dota2的伪随机谈开" data-tsina="" class="share clearfix">
+    </div>
+  </div>
+</footer>
+
+	</article>
+  
+
+
+<section class="comment">
+<div id="disqus_thread"></div>
+</section>
+<script>
+
+
+var disqus_config = function () {
+this.page.url = "https://samsonchen1989.github.io/post/random/";
+this.page.identifier = "https://samsonchen1989.github.io/post/random/";
+};
+(function() { 
+var d = document, s = d.createElement('script');
+
+s.src = '//.disqus.com/embed.js';
+
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+
+</div>
+
+    <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+  
+
+
+
+  
+
+
+
+  
+  <div class="archiveslist">
+    <p class="asidetitle">归档</p>
+    <ul class="archive-list">
+      
+      
+      <li class="archive-list-item">
+        <a class="archive-list-link" href="https://samsonchen1989.github.io/post/#2016-09">2016年09月</a><span class="archive-list-count">2</span>
+      </li>
+      
+      
+      <li class="archive-list-item">
+        <a class="archive-list-link" href="https://samsonchen1989.github.io/post/#2016-08">2016年08月</a><span class="archive-list-count">2</span>
+      </li>
+      
+      
+      <li class="archive-list-item">
+        <a class="archive-list-link" href="https://samsonchen1989.github.io/post/#2016-07">2016年07月</a><span class="archive-list-count">1</span>
+      </li>
+      
+    </ul>
+
+  </div>
+
+
+  
+
+
+
+  
+
+</aside>
+</div>
+
+  </div>
+  <footer><div id="footer" >
+  
+  <div class="line">
+    <span></span>
+    <div style='background:no-repeat url("https://samsonchen1989.github.io/img/head.jpeg") left top;-webkit-background-size:6.875em 6.875em;-moz-background-size:6.875em 6.875em;background-size:6.875em 6.875em;' class="author" ></div>
+  </div>
+  
+  
+  <section class="info">
+    <p>Samsonchen：无证程序员，游戏爱好者，psn奖杯咸鱼 <br/> 对AI，Shader和Procedural Content Generation比较感兴趣</p>
+  </section>
+  
+  <div class="social-font clearfix">
+    
+    <a href="http://weibo.com/canselwicecs" target="_blank" title="weibo"></a>
+    
+    
+    <a href="https://twitter.com/samsonchen_1989" target="_blank" title="twitter"></a>
+    
+    
+    <a href="https://github.com/samsonchen1989" target="_blank" title="github"></a>
+    
+    
+    
+  </div>
+  <p class="copyright">Powered by <a href="http://gohugo.io" target="_blank" title="hugo">hugo</a> and Theme by <a href="https://github.com/coderzh/hugo-pacman-theme" target="_blank" title="hugo-pacman-theme">hugo-pacman-theme</a> © 2016
+    
+    <a href="https://samsonchen1989.github.io/" target="_blank" title="samsonchen">samsonchen</a>
+    
+  </p>
+</div>
+</footer>
+  <script src="https://samsonchen1989.github.io/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+done = false;
+$(document).ready(function(){
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize();
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  $('form.search').on('submit', function (event) {
+    if (false === done) {
+      event.preventDefault();
+      var orgVal = $(this).find('#search').val();
+      $(this).find('#search').val('site:https:\/\/samsonchen1989.github.io\/ ' + orgVal);
+      done = true;
+      $(this).submit();
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});
+</script>
+
+
+<link rel="stylesheet" href="https://samsonchen1989.github.io/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="https://samsonchen1989.github.io/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+});
+</script>
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', '', 'auto');
+  ga('send', 'pageview');
+  $('#messagesbsb').remove();
+</script>
+
+
+
+</body>
+</html>
