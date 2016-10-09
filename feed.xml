@@ -6,8 +6,329 @@
     <description>Recent content on Gamer Cat</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Tue, 27 Sep 2016 17:27:36 +0800</lastBuildDate>
+    <lastBuildDate>Sun, 09 Oct 2016 23:05:06 +0800</lastBuildDate>
     <atom:link href="https://samsonchen1989.github.io/feed/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>程序生成地下城(2) #整理 #翻译 #Unity</title>
+      <link>https://samsonchen1989.github.io/post/proc2/</link>
+      <pubDate>Sun, 09 Oct 2016 23:05:06 +0800</pubDate>
+      
+      <guid>https://samsonchen1989.github.io/post/proc2/</guid>
+      <description>
+
+&lt;p&gt;在&lt;a href=&#34;https://samsonchen1989.github.io/post/proc1/&#34;&gt;上一篇教程&lt;/a&gt;的最后，我们可以得到类似下面一张地下城图：
+&lt;img src=&#34;https://samsonchen1989.github.io/img/proc2_1.png&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;存在两个问题，一个是存在一些零星的独立区域，一个是有些大区域互不相连。要解决这两个问题，要先引入&lt;strong&gt;区域Region&lt;/strong&gt;的概念，把每个独立的区域（包括墙和空白区域）看做一个Region，然后针对这些Region进行处理。&lt;/p&gt;
+
+&lt;h4 id=&#34;用flood-fill方法获取属于同一region的格子grid&#34;&gt;用Flood Fill方法获取属于同一Region的格子Grid&lt;/h4&gt;
+
+&lt;p&gt;先建立一个&lt;code&gt;struct Coord&lt;/code&gt; 来抽象格子，里面只有两个属性，X坐标和Y坐标。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-csharp&#34;&gt;struct Coord {
+    public int tileX;
+    public int tileY;
+
+    public Coord(int x, int y) {
+        tileX = x;
+        tileY = y;
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;用Flood Fill（可参考&lt;a href=&#34;https://en.wikipedia.org/wiki/Flood_fill&#34;&gt;Wiki&lt;/a&gt;）方式来寻找同一Region内的Coord，简单来说，就是递归查找格子的上下左右四个相邻格子，直到所有相邻格子的类型（0表示空地，1表示墙）不同。
+&lt;img src=&#34;https://samsonchen1989.github.io/img/proc2_7.gif&#34; alt=&#34;4方向的Flood Fill动态示意&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;考虑到递归方法虽然容易理解，但会大量占用function stack，在对程序效率要求比较高时还是尽量采取非递归的函数实现。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-csharp&#34;&gt;List&amp;lt;Coord&amp;gt; GetRegionTiles(int startX, int startY) {
+    // List to store region tile
+    List&amp;lt;Coord&amp;gt; tiles = new List&amp;lt;Coord&amp;gt;();
+    // Checked(1) or not(0)
+    int[,] mapTag = new int[width, height];
+    // Start tile filled or empty
+    int tileType = map[startX, startY];
+
+    Queue&amp;lt;Coord&amp;gt; queue = new Queue&amp;lt;Coord&amp;gt;();
+    queue.Enqueue(new Coord(startX, startY));
+    mapTag[startX, startY] = 1;
+
+    while (queue.Count &amp;gt; 0) {
+        Coord tile = queue.Dequeue();
+        tiles.Add(tile);
+        // Check tile&#39;s surrounding tiles
+        for (int x = tile.tileX - 1; x &amp;lt;= tile.tileX + 1; x++) {
+            for (int y = tile.tileY - 1; y &amp;lt;= tile.tileY + 1; y++) {
+                // (x == tile.tileX || y == tile.tileY) just to check four neighbour tiles: up, left, right, down
+                if (IsInMapRange(x, y) &amp;amp;&amp;amp; (x == tile.tileX || y == tile.tileY)) {
+                    if (mapTag[x, y] == 0 &amp;amp;&amp;amp; tileType == map[x, y]) {
+                        queue.Enqueue(new Coord(x, y));
+                        mapTag[x, y] = 1;
+                    }
+                }
+            }
+        }
+    }
+
+    return tiles;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;从一个起始点&lt;code&gt;(startX, startY)&lt;/code&gt;开始，用一个&lt;code&gt;queue&lt;/code&gt;&lt;strong&gt;(First In First Out)&lt;/strong&gt;储存属于同一type的周边格子，然后每次加入到返回结果列表tiles时再次检查周边格子，实现Flood Fill的递归。&lt;code&gt;mapTag&lt;/code&gt;数组用来防止重复检查。&lt;/p&gt;
+
+&lt;p&gt;有了这个方法，我们就可以获取到各个Region，以及各个Region所包含的所有&lt;code&gt;Coord&lt;/code&gt;坐标信息。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-csharp&#34;&gt;List&amp;lt;List&amp;lt;Coord&amp;gt;&amp;gt; GetRegions(int tileType) {
+    List&amp;lt;List&amp;lt;Coord&amp;gt;&amp;gt; regions = new List&amp;lt;List&amp;lt;Coord&amp;gt;&amp;gt;();
+    // 0 unchecked, 1 checked
+    int[,] mapTag = new int[width, height];
+
+    for (int x = 0; x &amp;lt; width; x++) {
+        for (int y = 0; y &amp;lt; height; y++) {
+            if (mapTag[x, y] == 0 &amp;amp;&amp;amp; map[x, y] == tileType) {
+                List&amp;lt;Coord&amp;gt; region = GetRegionTiles(x, y);
+                regions.Add(region);
+                // Set all tiles to checked
+                foreach (Coord tile in region) {
+                    mapTag[tile.tileX, tile.tileY] = 1;
+                }
+            }
+        }
+    }
+
+    return regions;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;传入的&lt;code&gt;tileType&lt;/code&gt;表示我们要查找的Region属性，如果传入1，则返回所有表示墙的Region列表&lt;code&gt;wallRegions&lt;/code&gt;，如果传入0，则返回所有空白区域列表，即所有的房间&lt;code&gt;roomRegions&lt;/code&gt;。&lt;/p&gt;
+
+&lt;h4 id=&#34;去除小型region&#34;&gt;去除小型Region&lt;/h4&gt;
+
+&lt;p&gt;设定一个&lt;code&gt;thresholdSize&lt;/code&gt;值，在获取所有&lt;code&gt;wallRegions&lt;/code&gt;和&lt;code&gt;roomRegions&lt;/code&gt;时，如果Region包含的格子数量小于&lt;code&gt;thresholdSize&lt;/code&gt;，则消除或填充该Region。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-csharp&#34;&gt;List&amp;lt;List&amp;lt;Coord&amp;gt;&amp;gt; wallRegions = GetRegions(1);
+int wallThresholdSize = 50;
+foreach (List&amp;lt;Coord&amp;gt; wallRegion in wallRegions) {
+    if (wallRegion.Count &amp;lt; wallThresholdSize) {
+        foreach (Coord tile in wallRegion) {
+            // Set all tiny wall region to empty tile
+            map[tile.tileX, tile.tileY] = 0;
+        }
+    }
+}
+
+// Get empty rooms
+List&amp;lt;List&amp;lt;Coord&amp;gt;&amp;gt; roomRegions = GetRegions(0);
+int roomThresholdSize = 50;
+foreach (List&amp;lt;Coord&amp;gt; roomRegion in roomRegions) {
+    if (roomRegion.Count &amp;lt; roomThresholdSize) {
+        foreach (Coord tile in roomRegion) {
+            // Set all tiny room to filled tile
+            map[tile.tileX, tile.tileY] = 1;
+        }
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;加入这步处理，可以看到上面的地下城图又规整了许多：
+&lt;img src=&#34;https://samsonchen1989.github.io/img/proc2_2.png&#34; alt=&#34;去除过小region后的地下城&#34; /&gt;&lt;/p&gt;
+
+&lt;h4 id=&#34;连接房间roomregions&#34;&gt;连接房间roomRegions&lt;/h4&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://samsonchen1989.github.io/img/proc2_3.png&#34; alt=&#34;Flood Fill&#34; /&gt;
+&lt;img src=&#34;https://samsonchen1989.github.io/img/proc2_4.png&#34; alt=&#34;获得的各个Room列表roomRegions&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;既然获取到了所有房间的列表，接下来就是要遵循一定规则把所有房间连接起来：&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;所有房间与距离最接近的房间相连。&lt;/li&gt;
+&lt;li&gt;确保所有房间互相连接，不会出现独立的房间。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;新建一个Room类，用来抽象房间，里面属性包含：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;List&amp;lt;Coord&amp;gt; tiles&lt;/code&gt;，Room包含的所有点的坐标&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;List&amp;lt;Coord&amp;gt; edgeTiles&lt;/code&gt;，所有Room内边缘的点，即left，up，right，down四周有一个点是墙&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;List&amp;lt;Room&amp;gt; connectedRooms&lt;/code&gt;，所有已连接的Room索引&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;在构造函数中，计算出&lt;code&gt;edgeTiles&lt;/code&gt;，后面会用它来计算两个房间之间的最短连接路线。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-csharp&#34;&gt;public Room(List&amp;lt;Coord&amp;gt; roomTiles, int[,] map) {
+    tiles = roomTiles;
+    roomSize = tiles.Count;
+    connectedRooms = new List&amp;lt;Room&amp;gt;();
+
+    edgeTiles = new List&amp;lt;Coord&amp;gt;();
+    foreach (Coord tile in tiles) {
+        for (int x = tile.tileX-1; x &amp;lt;= tile.tileX+1; x++) {
+            for (int y = tile.tileY-1; y &amp;lt;= tile.tileY+1; y++) {
+                if (x == tile.tileX || y == tile.tileY) {
+                    if (map[x,y] == 1) {
+                        edgeTiles.Add(tile);
+                    }
+                }
+            }
+        }
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;另外加入两个方法&lt;code&gt;ConnectRooms(Room a, Room b)&lt;/code&gt;和&lt;code&gt;IsConnected(Room other)&lt;/code&gt;来把已连接的Room添加到connectedRooms里和检测是否已连接到当前Room。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-csharp&#34;&gt;public static void ConnectRooms(Room roomA, Room roomB) {
+    roomA.connectedRooms.Add (roomB);
+    roomB.connectedRooms.Add (roomA);
+}
+
+public bool IsConnected(Room otherRoom) {
+    return connectedRooms.Contains(otherRoom);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;下面开始构造一个函数&lt;code&gt;ConnectClosestRooms(List&amp;lt;Room&amp;gt; allRooms)&lt;/code&gt;，Input是所有Room的List，然后用Unity里面&lt;code&gt;Debug.DrawLine&lt;/code&gt;方法先画出Room间的连接路径。思路是：&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;遍历allRooms，获取roomA，其他所有Room集合称为roomBList。&lt;/li&gt;
+&lt;li&gt;遍历roomBList，获取roomB。&lt;/li&gt;
+&lt;li&gt;遍历roomA的边缘edgeTiles和roomB的边缘edgeTiles，算出最小距离&lt;code&gt;distanceBetweenRooms&lt;/code&gt;和两边的边缘点&lt;code&gt;tileA&lt;/code&gt;和&lt;code&gt;tileB&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;重复步骤2的遍历，直到找到最小的&lt;code&gt;distanceBetweenRooms&lt;/code&gt;和对应的&lt;code&gt;tileA&lt;/code&gt;，&lt;code&gt;tileB&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;连接tileA和tileB。&lt;/li&gt;
+&lt;li&gt;重复步骤1。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;程序实现如下：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-csharp&#34;&gt;void ConnectClosestRooms(List&amp;lt;Room&amp;gt; allRooms) {
+    int bestDistance = 0;
+    Coord bestTileA = new Coord();
+    Coord bestTileB = new Coord();
+    Room bestRoomA = new Room();
+    Room bestRoomB = new Room();
+    bool possibleConnectionFound = false;
+
+    foreach (Room roomA in allRooms) {
+        possibleConnectionFound = false;
+
+        foreach (Room roomB in allRooms) {
+            if (roomA == roomB) {
+                continue;
+            }
+
+            if (roomA.isConnected(roomB)) {
+                possibleConnectionFound = false;
+                break;
+            }
+
+            for (int tileIndexA = 0; tileIndexA &amp;lt; roomA.edgeTiles.Count; tileIndexA++) {
+                for (int tileIndexB = 0; tileIndexB &amp;lt; roomB.edgeTiles.Count; tileIndexB++) {
+                    Coord tileA = roomA.edgeTiles[tileIndexA];
+                    Coord tileB = roomB.edgeTiles[tileIndexB];
+                    int distanceBetweenRooms = (int)(Mathf.Pow(tileA.tileX - tileB.tileX, 2) + Mathf.Pow(tileA.tileY - tileB.tileY, 2));
+                    if (distanceBetweenRooms &amp;lt; bestDistance || !possibleConnectionFound) {
+                        bestDistance = distanceBetweenRooms;
+                        possibleConnectionFound = true;
+                        bestTileA = tileA;
+                        bestTileB = tileB;
+                        bestRoomA = roomA;
+                        bestRoomB = roomB;
+                    }
+                }
+            }
+        }
+
+        if (possibleConnectionFound) {
+            CreatePassage(bestRoomA, bestRoomB, bestTileA, bestTileB);
+        }
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;加入运行后在Scene窗口可以看到如下图的路径被创建：
+&lt;img src=&#34;https://samsonchen1989.github.io/img/proc2_5.png&#34; alt=&#34;并没有完全连接的Room&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;等等，似乎有哪里不对！为什么少了一条路径，难道是前面的&lt;code&gt;ConnectClosestRooms&lt;/code&gt;方法实现思路有问题？&lt;/p&gt;
+
+&lt;p&gt;的确，再想想的话，会发现前面的思路可以满足&lt;strong&gt;条件1： 所有房间与距离最接近的房间相连&lt;/strong&gt;，但无法确保满足&lt;strong&gt;条件2：不会出现独立的房间。&lt;/strong&gt;在上面实现的基础上，我们需要引入一个新概念：&lt;strong&gt;主房间MainRoom&lt;/strong&gt;。&lt;/p&gt;
+
+&lt;p&gt;主房间就是所有房间中面积最大的房间，在&lt;code&gt;ConnectClosestRooms&lt;/code&gt;处理过后，按照下面流程再做一次处理：&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;在建立roomRegions时，选出面积最大的房间mainRoom。&lt;/li&gt;
+&lt;li&gt;设定所有与主房间连接的房间为&lt;code&gt;connectedRooms&lt;/code&gt;，所有未和主房间连接的房间为&lt;code&gt;otherRooms&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;遍历&lt;code&gt;otherRooms&lt;/code&gt;和&lt;code&gt;connectedRooms&lt;/code&gt;的边缘tiles，找出一条最短连接路线和两个顶点&lt;code&gt;tileA&lt;/code&gt;和&lt;code&gt;tileB&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;连接&lt;code&gt;tileA&lt;/code&gt;和&lt;code&gt;tileB&lt;/code&gt;，把刚连接的Room加入&lt;code&gt;connectedRooms&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;重复步骤2，直到所有房间都和mainRoom相连。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-csharp&#34;&gt;void ConnectClosestRooms(List&amp;lt;Room&amp;gt; allRooms) {
+    int bestDistance = 0;
+    Coord bestTileA = new Coord();
+    Coord bestTileB = new Coord();
+    Room bestRoomA = new Room();
+    Room bestRoomB = new Room();
+    bool possibleConnectionFound = false;
+
+    foreach (Room roomA in allRooms) {
+        possibleConnectionFound = false;
+
+        foreach (Room roomB in allRooms) {
+            if (roomA == roomB) {
+                continue;
+            }
+
+            if (roomA.isConnected(roomB)) {
+                possibleConnectionFound = false;
+                break;
+            }
+
+            for (int tileIndexA = 0; tileIndexA &amp;lt; roomA.edgeTiles.Count; tileIndexA++) {
+                for (int tileIndexB = 0; tileIndexB &amp;lt; roomB.edgeTiles.Count; tileIndexB++) {
+                    Coord tileA = roomA.edgeTiles[tileIndexA];
+                    Coord tileB = roomB.edgeTiles[tileIndexB];
+                    int distanceBetweenRooms = (int)(Mathf.Pow(tileA.tileX - tileB.tileX, 2) + Mathf.Pow(tileA.tileY - tileB.tileY, 2));
+                    if (distanceBetweenRooms &amp;lt; bestDistance || !possibleConnectionFound) {
+                        bestDistance = distanceBetweenRooms;
+                        possibleConnectionFound = true;
+                        bestTileA = tileA;
+                        bestTileB = tileB;
+                        bestRoomA = roomA;
+                        bestRoomB = roomB;
+                    }
+                }
+            }
+        }
+
+        if (possibleConnectionFound) {
+            CreatePassage(bestRoomA, bestRoomB, bestTileA, bestTileB);
+        }
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;加入了上面的处理，最终结果如下图所示：
+&lt;img src=&#34;https://samsonchen1989.github.io/img/proc2_6.png&#34; alt=&#34;所有房间通过连接到主房间，确保房间贯通&#34; /&gt;&lt;/p&gt;
+
+&lt;h4 id=&#34;结尾&#34;&gt;结尾&lt;/h4&gt;
+
+&lt;p&gt;总结下Room的处理流程：&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;用Flood Fill方法选出房间集合和墙区域的集合。&lt;/li&gt;
+&lt;li&gt;设定阈值，清除过小的墙和房间。&lt;/li&gt;
+&lt;li&gt;获取房间列表，两两连接最接近房间。&lt;/li&gt;
+&lt;li&gt;获取主房间，确保所有房间都连接到主房间。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;处理好了路径，接下来的工作就是处理map数组，把路径描绘出来，这个涉及到一些新的概览，可以下一章单独聊。&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;本篇内容包含&lt;a href=&#34;https://www.youtube.com/playlist?list=PLFt_AvWsXl0eZgMK_DT5_biRkWXftAOf9&#34;&gt;Procedural Cave Generation&lt;/a&gt;系列视频教程的&lt;a href=&#34;https://www.youtube.com/watch?v=xYOG8kH2tF8&amp;amp;index=5&amp;amp;list=PLFt_AvWsXl0eZgMK_DT5_biRkWXftAOf9&#34;&gt;第5章&lt;/a&gt;，&lt;a href=&#34;https://www.youtube.com/watch?v=eVb9kQXvEZM&amp;amp;index=6&amp;amp;list=PLFt_AvWsXl0eZgMK_DT5_biRkWXftAOf9&#34;&gt;第6章&lt;/a&gt;和&lt;a href=&#34;https://www.youtube.com/watch?v=NhMriRLb1fs&amp;amp;list=PLFt_AvWsXl0eZgMK_DT5_biRkWXftAOf9&amp;amp;index=7&#34;&gt;第7章&lt;/a&gt;&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;源代码可参考SebLague小哥的Github，&lt;a href=&#34;https://github.com/SebLague/Procedural-Cave-Generation&#34;&gt;戳我直达&lt;/a&gt;&lt;/em&gt;&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>从Dota2的伪随机谈开</title>
@@ -255,14 +576,14 @@ main()
 
 &lt;p&gt;测试结果和配置概率很接近，这样就可以让策划尽情发挥他的奇怪掉率了。&lt;/p&gt;
 
-&lt;p&gt;###总结&lt;/p&gt;
+&lt;h3 id=&#34;总结&#34;&gt;总结&lt;/h3&gt;
 
 &lt;p&gt;上面的部分只是最近看到的一些有意思的随机数讨论整理，真正在实际项目中，随机数的处理是跟随不同的需求做变化的，随机可以增加游戏过程的乐趣，可以给游戏增加卖点，也可以变成各种“坑”，对于开发来说，只要这个坑是可控制的，不要坑到自己就行了~&lt;/p&gt;
 </description>
     </item>
     
     <item>
-      <title>程序生成地下城/洞穴(1) #整理 #翻译 #Unity</title>
+      <title>程序生成地下城(1) #整理 #翻译 #Unity</title>
       <link>https://samsonchen1989.github.io/post/proc1/</link>
       <pubDate>Fri, 23 Sep 2016 09:19:43 +0800</pubDate>
       

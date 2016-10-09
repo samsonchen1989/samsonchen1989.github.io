@@ -1,0 +1,668 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>程序生成地下城(2) #整理 #翻译 #Unity - Gamer Cat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+  
+  <meta name="description" content="在上一篇教程的最后，我们可以得到类似下面一张地下城图： 存在两个问题，一个是存在一些零星的独立区域，一个是有些大区域互不相连。要解决这两个问题">
+  <meta name="author" content="samsonchen">
+  <meta itemprop="name" content="程序生成地下城(2) #整理 #翻译 #Unity - Gamer Cat">
+  <meta itemprop="description" content="在上一篇教程的最后，我们可以得到类似下面一张地下城图： 存在两个问题，一个是存在一些零星的独立区域，一个是有些大区域互不相连。要解决这两个问题">
+  <meta itemprop="image" content="https://samsonchen1989.github.io/img/author.jpg">
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:site" content="@samsonchen_1989" />
+  <meta name="twitter:title" content="程序生成地下城(2) #整理 #翻译 #Unity - Gamer Cat" />
+  
+  <meta name="twitter:description" content="hehe">
+  
+  <link rel="shortcut icon" href="https://samsonchen1989.github.io/img/favicon.ico"/>
+  <link rel="apple-touch-icon" href="https://samsonchen1989.github.io/apple-touch-icon.png" />
+  <link rel="apple-touch-icon-precomposed" href="https://samsonchen1989.github.io/apple-touch-icon.png" />
+  <link rel="stylesheet" href="https://samsonchen1989.github.io/highlight/styles/github.css">
+  <script src="https://samsonchen1989.github.io/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <link rel="stylesheet" href="https://samsonchen1989.github.io/font/hack/css/hack.min.css">
+  <link rel="stylesheet" href="https://samsonchen1989.github.io/css/style.css">
+</head>
+
+<body>
+  <header>
+    <div>
+  
+  <div id="imglogo">
+    <a href="https://samsonchen1989.github.io/"><img src="https://samsonchen1989.github.io/img/logo.svg" alt="Gamer Cat" title="Gamer Cat"/></a>
+  </div>
+  
+  <div id="textlogo">
+    <h1 class="site-name"><a href="https://samsonchen1989.github.io/" title="Gamer Cat">Gamer Cat</a></h1>
+    <h2 class="blog-motto">偶尔码字和写代码，大部分时间都在睡觉😪和玩PS4的懒猫</h2>
+  </div>
+  <div class="navbar"><a class="navbutton navmobile" href="#" title="menu"></a></div>
+  <nav class="animated">
+    <ul>
+      
+      <li><a href="/">首页</a></li>
+      
+      <li><a href="/about">关于</a></li>
+      
+      <li>
+        <form class="search" method="get" action="https://www.google.com/search">
+          <div>
+            <input type="text" id="search" name="q" placeholder="搜索">
+          </div>
+        </form>
+      </li>
+    </ul>
+  </nav>
+</div>
+
+  </header>
+  <div id="container">
+    <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody">
+    <header class="article-info clearfix">
+  <h1 itemprop="name">
+      <a href="https://samsonchen1989.github.io/post/proc2/" title="程序生成地下城(2) #整理 #翻译 #Unity" itemprop="url">程序生成地下城(2) #整理 #翻译 #Unity</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="https://samsonchen1989.github.io/" title="samsonchen">samsonchen</a>
+    
+  </p>
+  <p class="article-time">
+    <time datetime="2016-10-09 23:05:06 &#43;0800 HKT" itemprop="datePublished">2016年10月09日</time>
+  </p>
+</header>
+
+	<div class="article-content">
+    
+    
+
+<p>在<a href="https://samsonchen1989.github.io/post/proc1/">上一篇教程</a>的最后，我们可以得到类似下面一张地下城图：
+<img src="/img/proc2_1.png" alt="" /></p>
+
+<p>存在两个问题，一个是存在一些零星的独立区域，一个是有些大区域互不相连。要解决这两个问题，要先引入<strong>区域Region</strong>的概念，把每个独立的区域（包括墙和空白区域）看做一个Region，然后针对这些Region进行处理。</p>
+
+<h4 id="用flood-fill方法获取属于同一region的格子grid">用Flood Fill方法获取属于同一Region的格子Grid</h4>
+
+<p>先建立一个<code>struct Coord</code> 来抽象格子，里面只有两个属性，X坐标和Y坐标。</p>
+
+<pre><code class="language-csharp">struct Coord {
+    public int tileX;
+    public int tileY;
+
+    public Coord(int x, int y) {
+        tileX = x;
+        tileY = y;
+    }
+}
+</code></pre>
+
+<p>用Flood Fill（可参考<a href="https://en.wikipedia.org/wiki/Flood_fill">Wiki</a>）方式来寻找同一Region内的Coord，简单来说，就是递归查找格子的上下左右四个相邻格子，直到所有相邻格子的类型（0表示空地，1表示墙）不同。
+<img src="/img/proc2_7.gif" alt="4方向的Flood Fill动态示意" /></p>
+
+<p>考虑到递归方法虽然容易理解，但会大量占用function stack，在对程序效率要求比较高时还是尽量采取非递归的函数实现。</p>
+
+<pre><code class="language-csharp">List&lt;Coord&gt; GetRegionTiles(int startX, int startY) {
+    // List to store region tile
+    List&lt;Coord&gt; tiles = new List&lt;Coord&gt;();
+    // Checked(1) or not(0)
+    int[,] mapTag = new int[width, height];
+    // Start tile filled or empty
+    int tileType = map[startX, startY];
+
+    Queue&lt;Coord&gt; queue = new Queue&lt;Coord&gt;();
+    queue.Enqueue(new Coord(startX, startY));
+    mapTag[startX, startY] = 1;
+
+    while (queue.Count &gt; 0) {
+        Coord tile = queue.Dequeue();
+        tiles.Add(tile);
+        // Check tile's surrounding tiles
+        for (int x = tile.tileX - 1; x &lt;= tile.tileX + 1; x++) {
+            for (int y = tile.tileY - 1; y &lt;= tile.tileY + 1; y++) {
+                // (x == tile.tileX || y == tile.tileY) just to check four neighbour tiles: up, left, right, down
+                if (IsInMapRange(x, y) &amp;&amp; (x == tile.tileX || y == tile.tileY)) {
+                    if (mapTag[x, y] == 0 &amp;&amp; tileType == map[x, y]) {
+                        queue.Enqueue(new Coord(x, y));
+                        mapTag[x, y] = 1;
+                    }
+                }
+            }
+        }
+    }
+
+    return tiles;
+}
+</code></pre>
+
+<p>从一个起始点<code>(startX, startY)</code>开始，用一个<code>queue</code><strong>(First In First Out)</strong>储存属于同一type的周边格子，然后每次加入到返回结果列表tiles时再次检查周边格子，实现Flood Fill的递归。<code>mapTag</code>数组用来防止重复检查。</p>
+
+<p>有了这个方法，我们就可以获取到各个Region，以及各个Region所包含的所有<code>Coord</code>坐标信息。</p>
+
+<pre><code class="language-csharp">List&lt;List&lt;Coord&gt;&gt; GetRegions(int tileType) {
+    List&lt;List&lt;Coord&gt;&gt; regions = new List&lt;List&lt;Coord&gt;&gt;();
+    // 0 unchecked, 1 checked
+    int[,] mapTag = new int[width, height];
+
+    for (int x = 0; x &lt; width; x++) {
+        for (int y = 0; y &lt; height; y++) {
+            if (mapTag[x, y] == 0 &amp;&amp; map[x, y] == tileType) {
+                List&lt;Coord&gt; region = GetRegionTiles(x, y);
+                regions.Add(region);
+                // Set all tiles to checked
+                foreach (Coord tile in region) {
+                    mapTag[tile.tileX, tile.tileY] = 1;
+                }
+            }
+        }
+    }
+
+    return regions;
+}
+</code></pre>
+
+<p>传入的<code>tileType</code>表示我们要查找的Region属性，如果传入1，则返回所有表示墙的Region列表<code>wallRegions</code>，如果传入0，则返回所有空白区域列表，即所有的房间<code>roomRegions</code>。</p>
+
+<h4 id="去除小型region">去除小型Region</h4>
+
+<p>设定一个<code>thresholdSize</code>值，在获取所有<code>wallRegions</code>和<code>roomRegions</code>时，如果Region包含的格子数量小于<code>thresholdSize</code>，则消除或填充该Region。</p>
+
+<pre><code class="language-csharp">List&lt;List&lt;Coord&gt;&gt; wallRegions = GetRegions(1);
+int wallThresholdSize = 50;
+foreach (List&lt;Coord&gt; wallRegion in wallRegions) {
+    if (wallRegion.Count &lt; wallThresholdSize) {
+        foreach (Coord tile in wallRegion) {
+            // Set all tiny wall region to empty tile
+            map[tile.tileX, tile.tileY] = 0;
+        }
+    }
+}
+
+// Get empty rooms
+List&lt;List&lt;Coord&gt;&gt; roomRegions = GetRegions(0);
+int roomThresholdSize = 50;
+foreach (List&lt;Coord&gt; roomRegion in roomRegions) {
+    if (roomRegion.Count &lt; roomThresholdSize) {
+        foreach (Coord tile in roomRegion) {
+            // Set all tiny room to filled tile
+            map[tile.tileX, tile.tileY] = 1;
+        }
+    }
+}
+</code></pre>
+
+<p>加入这步处理，可以看到上面的地下城图又规整了许多：
+<img src="/img/proc2_2.png" alt="去除过小region后的地下城" /></p>
+
+<h4 id="连接房间roomregions">连接房间roomRegions</h4>
+
+<p><img src="/img/proc2_3.png" alt="Flood Fill" />
+<img src="/img/proc2_4.png" alt="获得的各个Room列表roomRegions" /></p>
+
+<p>既然获取到了所有房间的列表，接下来就是要遵循一定规则把所有房间连接起来：</p>
+
+<ol>
+<li>所有房间与距离最接近的房间相连。</li>
+<li>确保所有房间互相连接，不会出现独立的房间。</li>
+</ol>
+
+<p>新建一个Room类，用来抽象房间，里面属性包含：</p>
+
+<ul>
+<li><code>List&lt;Coord&gt; tiles</code>，Room包含的所有点的坐标</li>
+<li><code>List&lt;Coord&gt; edgeTiles</code>，所有Room内边缘的点，即left，up，right，down四周有一个点是墙</li>
+<li><code>List&lt;Room&gt; connectedRooms</code>，所有已连接的Room索引</li>
+</ul>
+
+<p>在构造函数中，计算出<code>edgeTiles</code>，后面会用它来计算两个房间之间的最短连接路线。</p>
+
+<pre><code class="language-csharp">public Room(List&lt;Coord&gt; roomTiles, int[,] map) {
+    tiles = roomTiles;
+    roomSize = tiles.Count;
+    connectedRooms = new List&lt;Room&gt;();
+
+    edgeTiles = new List&lt;Coord&gt;();
+    foreach (Coord tile in tiles) {
+        for (int x = tile.tileX-1; x &lt;= tile.tileX+1; x++) {
+            for (int y = tile.tileY-1; y &lt;= tile.tileY+1; y++) {
+                if (x == tile.tileX || y == tile.tileY) {
+                    if (map[x,y] == 1) {
+                        edgeTiles.Add(tile);
+                    }
+                }
+            }
+        }
+    }
+}
+</code></pre>
+
+<p>另外加入两个方法<code>ConnectRooms(Room a, Room b)</code>和<code>IsConnected(Room other)</code>来把已连接的Room添加到connectedRooms里和检测是否已连接到当前Room。</p>
+
+<pre><code class="language-csharp">public static void ConnectRooms(Room roomA, Room roomB) {
+    roomA.connectedRooms.Add (roomB);
+    roomB.connectedRooms.Add (roomA);
+}
+
+public bool IsConnected(Room otherRoom) {
+    return connectedRooms.Contains(otherRoom);
+}
+</code></pre>
+
+<p>下面开始构造一个函数<code>ConnectClosestRooms(List&lt;Room&gt; allRooms)</code>，Input是所有Room的List，然后用Unity里面<code>Debug.DrawLine</code>方法先画出Room间的连接路径。思路是：</p>
+
+<ol>
+<li>遍历allRooms，获取roomA，其他所有Room集合称为roomBList。</li>
+<li>遍历roomBList，获取roomB。</li>
+<li>遍历roomA的边缘edgeTiles和roomB的边缘edgeTiles，算出最小距离<code>distanceBetweenRooms</code>和两边的边缘点<code>tileA</code>和<code>tileB</code>。</li>
+<li>重复步骤2的遍历，直到找到最小的<code>distanceBetweenRooms</code>和对应的<code>tileA</code>，<code>tileB</code>。</li>
+<li>连接tileA和tileB。</li>
+<li>重复步骤1。</li>
+</ol>
+
+<p>程序实现如下：</p>
+
+<pre><code class="language-csharp">void ConnectClosestRooms(List&lt;Room&gt; allRooms) {
+    int bestDistance = 0;
+    Coord bestTileA = new Coord();
+    Coord bestTileB = new Coord();
+    Room bestRoomA = new Room();
+    Room bestRoomB = new Room();
+    bool possibleConnectionFound = false;
+
+    foreach (Room roomA in allRooms) {
+        possibleConnectionFound = false;
+
+        foreach (Room roomB in allRooms) {
+            if (roomA == roomB) {
+                continue;
+            }
+
+            if (roomA.isConnected(roomB)) {
+                possibleConnectionFound = false;
+                break;
+            }
+
+            for (int tileIndexA = 0; tileIndexA &lt; roomA.edgeTiles.Count; tileIndexA++) {
+                for (int tileIndexB = 0; tileIndexB &lt; roomB.edgeTiles.Count; tileIndexB++) {
+                    Coord tileA = roomA.edgeTiles[tileIndexA];
+                    Coord tileB = roomB.edgeTiles[tileIndexB];
+                    int distanceBetweenRooms = (int)(Mathf.Pow(tileA.tileX - tileB.tileX, 2) + Mathf.Pow(tileA.tileY - tileB.tileY, 2));
+                    if (distanceBetweenRooms &lt; bestDistance || !possibleConnectionFound) {
+                        bestDistance = distanceBetweenRooms;
+                        possibleConnectionFound = true;
+                        bestTileA = tileA;
+                        bestTileB = tileB;
+                        bestRoomA = roomA;
+                        bestRoomB = roomB;
+                    }
+                }
+            }
+        }
+
+        if (possibleConnectionFound) {
+            CreatePassage(bestRoomA, bestRoomB, bestTileA, bestTileB);
+        }
+    }
+}
+</code></pre>
+
+<p>加入运行后在Scene窗口可以看到如下图的路径被创建：
+<img src="/img/proc2_5.png" alt="并没有完全连接的Room" /></p>
+
+<p>等等，似乎有哪里不对！为什么少了一条路径，难道是前面的<code>ConnectClosestRooms</code>方法实现思路有问题？</p>
+
+<p>的确，再想想的话，会发现前面的思路可以满足<strong>条件1： 所有房间与距离最接近的房间相连</strong>，但无法确保满足<strong>条件2：不会出现独立的房间。</strong>在上面实现的基础上，我们需要引入一个新概念：<strong>主房间MainRoom</strong>。</p>
+
+<p>主房间就是所有房间中面积最大的房间，在<code>ConnectClosestRooms</code>处理过后，按照下面流程再做一次处理：</p>
+
+<ol>
+<li>在建立roomRegions时，选出面积最大的房间mainRoom。</li>
+<li>设定所有与主房间连接的房间为<code>connectedRooms</code>，所有未和主房间连接的房间为<code>otherRooms</code>。</li>
+<li>遍历<code>otherRooms</code>和<code>connectedRooms</code>的边缘tiles，找出一条最短连接路线和两个顶点<code>tileA</code>和<code>tileB</code>。</li>
+<li>连接<code>tileA</code>和<code>tileB</code>，把刚连接的Room加入<code>connectedRooms</code>。</li>
+<li>重复步骤2，直到所有房间都和mainRoom相连。</li>
+</ol>
+
+<pre><code class="language-csharp">void ConnectClosestRooms(List&lt;Room&gt; allRooms) {
+    int bestDistance = 0;
+    Coord bestTileA = new Coord();
+    Coord bestTileB = new Coord();
+    Room bestRoomA = new Room();
+    Room bestRoomB = new Room();
+    bool possibleConnectionFound = false;
+
+    foreach (Room roomA in allRooms) {
+        possibleConnectionFound = false;
+
+        foreach (Room roomB in allRooms) {
+            if (roomA == roomB) {
+                continue;
+            }
+
+            if (roomA.isConnected(roomB)) {
+                possibleConnectionFound = false;
+                break;
+            }
+
+            for (int tileIndexA = 0; tileIndexA &lt; roomA.edgeTiles.Count; tileIndexA++) {
+                for (int tileIndexB = 0; tileIndexB &lt; roomB.edgeTiles.Count; tileIndexB++) {
+                    Coord tileA = roomA.edgeTiles[tileIndexA];
+                    Coord tileB = roomB.edgeTiles[tileIndexB];
+                    int distanceBetweenRooms = (int)(Mathf.Pow(tileA.tileX - tileB.tileX, 2) + Mathf.Pow(tileA.tileY - tileB.tileY, 2));
+                    if (distanceBetweenRooms &lt; bestDistance || !possibleConnectionFound) {
+                        bestDistance = distanceBetweenRooms;
+                        possibleConnectionFound = true;
+                        bestTileA = tileA;
+                        bestTileB = tileB;
+                        bestRoomA = roomA;
+                        bestRoomB = roomB;
+                    }
+                }
+            }
+        }
+
+        if (possibleConnectionFound) {
+            CreatePassage(bestRoomA, bestRoomB, bestTileA, bestTileB);
+        }
+    }
+}
+</code></pre>
+
+<p>加入了上面的处理，最终结果如下图所示：
+<img src="/img/proc2_6.png" alt="所有房间通过连接到主房间，确保房间贯通" /></p>
+
+<h4 id="结尾">结尾</h4>
+
+<p>总结下Room的处理流程：</p>
+
+<ol>
+<li>用Flood Fill方法选出房间集合和墙区域的集合。</li>
+<li>设定阈值，清除过小的墙和房间。</li>
+<li>获取房间列表，两两连接最接近房间。</li>
+<li>获取主房间，确保所有房间都连接到主房间。</li>
+</ol>
+
+<p>处理好了路径，接下来的工作就是处理map数组，把路径描绘出来，这个涉及到一些新的概览，可以下一章单独聊。</p>
+
+<p><em>本篇内容包含<a href="https://www.youtube.com/playlist?list=PLFt_AvWsXl0eZgMK_DT5_biRkWXftAOf9">Procedural Cave Generation</a>系列视频教程的<a href="https://www.youtube.com/watch?v=xYOG8kH2tF8&amp;index=5&amp;list=PLFt_AvWsXl0eZgMK_DT5_biRkWXftAOf9">第5章</a>，<a href="https://www.youtube.com/watch?v=eVb9kQXvEZM&amp;index=6&amp;list=PLFt_AvWsXl0eZgMK_DT5_biRkWXftAOf9">第6章</a>和<a href="https://www.youtube.com/watch?v=NhMriRLb1fs&amp;list=PLFt_AvWsXl0eZgMK_DT5_biRkWXftAOf9&amp;index=7">第7章</a></em></p>
+
+<p><em>源代码可参考SebLague小哥的Github，<a href="https://github.com/SebLague/Procedural-Cave-Generation">戳我直达</a></em></p>
+
+	</div>
+  <footer class="article-footer clearfix">
+  
+
+
+
+  <div class="article-share" id="share">
+    <div data-url="https://samsonchen1989.github.io/post/proc2/" data-title="程序生成地下城(2) #整理 #翻译 #Unity" data-tsina="" class="share clearfix">
+    </div>
+  </div>
+</footer>
+
+	</article>
+  
+
+
+<section class="comment">
+<div id="disqus_thread"></div>
+</section>
+<script>
+
+
+var disqus_config = function () {
+this.page.url = "https://samsonchen1989.github.io/post/proc2/";
+this.page.identifier = "https://samsonchen1989.github.io/post/proc2/";
+};
+(function() { 
+var d = document, s = d.createElement('script');
+
+s.src = '//.disqus.com/embed.js';
+
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+
+</div>
+
+    <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+  
+
+
+
+  
+
+
+
+  
+  <div class="archiveslist">
+    <p class="asidetitle">归档</p>
+    <ul class="archive-list">
+      
+      
+      <li class="archive-list-item">
+        <a class="archive-list-link" href="https://samsonchen1989.github.io/post/#2016-10">2016年10月</a><span class="archive-list-count">1</span>
+      </li>
+      
+      
+      <li class="archive-list-item">
+        <a class="archive-list-link" href="https://samsonchen1989.github.io/post/#2016-09">2016年09月</a><span class="archive-list-count">2</span>
+      </li>
+      
+      
+      <li class="archive-list-item">
+        <a class="archive-list-link" href="https://samsonchen1989.github.io/post/#2016-08">2016年08月</a><span class="archive-list-count">2</span>
+      </li>
+      
+      
+      <li class="archive-list-item">
+        <a class="archive-list-link" href="https://samsonchen1989.github.io/post/#2016-07">2016年07月</a><span class="archive-list-count">1</span>
+      </li>
+      
+    </ul>
+
+  </div>
+
+
+  
+
+
+
+  
+
+</aside>
+</div>
+
+  </div>
+  <footer><div id="footer" >
+  
+  <div class="line">
+    <span></span>
+    <div style='background:no-repeat url("https://samsonchen1989.github.io/img/head.jpeg") left top;-webkit-background-size:6.875em 6.875em;-moz-background-size:6.875em 6.875em;background-size:6.875em 6.875em;' class="author" ></div>
+  </div>
+  
+  
+  <section class="info">
+    <p>Samsonchen：无证程序员，游戏爱好者，psn奖杯咸鱼 <br/> 对AI，Shader和Procedural Content Generation比较感兴趣</p>
+  </section>
+  
+  <div class="social-font clearfix">
+    
+    <a href="http://weibo.com/canselwicecs" target="_blank" title="weibo"></a>
+    
+    
+    <a href="https://twitter.com/samsonchen_1989" target="_blank" title="twitter"></a>
+    
+    
+    <a href="https://github.com/samsonchen1989" target="_blank" title="github"></a>
+    
+    
+    
+  </div>
+  <p class="copyright">Powered by <a href="http://gohugo.io" target="_blank" title="hugo">hugo</a> and Theme by <a href="https://github.com/coderzh/hugo-pacman-theme" target="_blank" title="hugo-pacman-theme">hugo-pacman-theme</a> © 2016
+    
+    <a href="https://samsonchen1989.github.io/" target="_blank" title="samsonchen">samsonchen</a>
+    
+  </p>
+</div>
+</footer>
+  <script src="https://samsonchen1989.github.io/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+done = false;
+$(document).ready(function(){
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize();
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  $('form.search').on('submit', function (event) {
+    if (false === done) {
+      event.preventDefault();
+      var orgVal = $(this).find('#search').val();
+      $(this).find('#search').val('site:https:\/\/samsonchen1989.github.io\/ ' + orgVal);
+      done = true;
+      $(this).submit();
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});
+</script>
+
+
+<link rel="stylesheet" href="https://samsonchen1989.github.io/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="https://samsonchen1989.github.io/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+});
+</script>
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', '', 'auto');
+  ga('send', 'pageview');
+  $('#messagesbsb').remove();
+</script>
+
+
+
+</body>
+</html>
