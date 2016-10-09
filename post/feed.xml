@@ -322,7 +322,7 @@ public bool IsConnected(Room otherRoom) {
 &lt;li&gt;获取主房间，确保所有房间都连接到主房间。&lt;/li&gt;
 &lt;/ol&gt;
 
-&lt;p&gt;处理好了路径，接下来的工作就是处理map数组，把路径描绘出来，这个涉及到一些新的概览，可以下一章单独聊。&lt;/p&gt;
+&lt;p&gt;处理好了路径，接下来的工作就是处理map数组，把路径描绘出来，这个涉及到一些新的概念，可以下一章单独聊。&lt;/p&gt;
 
 &lt;p&gt;&lt;em&gt;本篇内容包含&lt;a href=&#34;https://www.youtube.com/playlist?list=PLFt_AvWsXl0eZgMK_DT5_biRkWXftAOf9&#34;&gt;Procedural Cave Generation&lt;/a&gt;系列视频教程的&lt;a href=&#34;https://www.youtube.com/watch?v=xYOG8kH2tF8&amp;amp;index=5&amp;amp;list=PLFt_AvWsXl0eZgMK_DT5_biRkWXftAOf9&#34;&gt;第5章&lt;/a&gt;，&lt;a href=&#34;https://www.youtube.com/watch?v=eVb9kQXvEZM&amp;amp;index=6&amp;amp;list=PLFt_AvWsXl0eZgMK_DT5_biRkWXftAOf9&#34;&gt;第6章&lt;/a&gt;和&lt;a href=&#34;https://www.youtube.com/watch?v=NhMriRLb1fs&amp;amp;list=PLFt_AvWsXl0eZgMK_DT5_biRkWXftAOf9&amp;amp;index=7&#34;&gt;第7章&lt;/a&gt;&lt;/em&gt;&lt;/p&gt;
 
