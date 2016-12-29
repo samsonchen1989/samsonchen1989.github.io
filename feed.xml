@@ -2,12 +2,134 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Gamer Cat</title>
-    <link>https://samsonchen1989.github.io/</link>
+    <link>https://samsonchen1989.github.io/feed/index.xml</link>
     <description>Recent content on Gamer Cat</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 09 Oct 2016 23:05:06 +0800</lastBuildDate>
+    <lastBuildDate>Wed, 28 Dec 2016 16:43:10 +0800</lastBuildDate>
     <atom:link href="https://samsonchen1989.github.io/feed/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>程序生成地下城(3) #整理 #翻译 #Unity</title>
+      <link>https://samsonchen1989.github.io/post/proc3/</link>
+      <pubDate>Wed, 28 Dec 2016 16:43:10 +0800</pubDate>
+      
+      <guid>https://samsonchen1989.github.io/post/proc3/</guid>
+      <description>&lt;p&gt;上篇教程结束，可以得到一个处理过的地下城&lt;code&gt;map&lt;/code&gt;数组，拥有多个房间以及房间之间的两个最短&lt;strong&gt;连接点&lt;/strong&gt;，如下图所示：
+&lt;img src=&#34;https://samsonchen1989.github.io/img/proc3/1.png&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;要连通整个地下城，需要在房间之间创建路径，既然我们已经有了路径的首尾两点，那问题就变成了如何&lt;strong&gt;在一个二维像素网格中，给定两个点，点出连接两点的线段&lt;/strong&gt;：
+&lt;img src=&#34;https://samsonchen1989.github.io/img/proc3/2.png&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;可能在上个世纪人们造像素显示器的时候就面临过这个问题，也留下了一个很经典的算法：&lt;a href=&#34;https://zh.wikipedia.org/wiki/%E5%B8%83%E9%9B%B7%E6%A3%AE%E6%BC%A2%E5%A7%86%E7%9B%B4%E7%B7%9A%E6%BC%94%E7%AE%97%E6%B3%95&#34;&gt;&lt;strong&gt;布雷森漢姆直線演算法&lt;/strong&gt;&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;从最简单的情况开始，假设我们有两点&lt;strong&gt;p1(x1, y1)&lt;/strong&gt;，&lt;strong&gt;p2(x2, y2)&lt;/strong&gt;，p2在p1的右上方。可以算出斜率&lt;strong&gt;delta&lt;/strong&gt;为(y2 - y1) / (x2 - x1)。设定一个误差值error，初始设为0。&lt;/p&gt;
+
+&lt;p&gt;版本1:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;从x1开始，顺序遍历从x1到x2的点x，y从y1开始先保持不变。&lt;/li&gt;
+&lt;li&gt;填充点(x, y)。&lt;/li&gt;
+&lt;li&gt;x每增加1，error就增加斜率delta。&lt;/li&gt;
+&lt;li&gt;当error值大于&lt;strong&gt;0.5&lt;/strong&gt;的时候，说明这时候偏差更偏向于y，y增加1，error值减去1。&lt;/li&gt;
+&lt;li&gt;重复步骤2，直到x遍历结束。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;连线后的结果如图所示：
+&lt;img src=&#34;https://samsonchen1989.github.io/img/proc3/3.png&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;上面的基础算法只适用于p2在p1右上角，且斜率delta小于1的情况，可以稍微修改下以适用于一般情况：&lt;/p&gt;
+
+&lt;p&gt;版本2:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;如果斜率delta大于1，则交换x1，y1和交换x2，y2，相当于旋转坐标系90度。&lt;/li&gt;
+&lt;li&gt;如果p2在p1左边(x2 &amp;lt; x1)，则交换起始点。&lt;/li&gt;
+&lt;li&gt;如果p2在p1下边(y2 &amp;lt; y1)，则当error值大于0.5时，y减去1。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;考虑到浮点数的运算效率比较慢，还可以把error和delta变为整数进行运算：
+版本3:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;error值初始设置为(int)((x2 - x1)/2)&lt;/li&gt;
+&lt;li&gt;deltaY值设置为abs(y2 - y1)，deltaX值设置为(x2 - x1)&lt;/li&gt;
+&lt;li&gt;x每增加1，error值就减去deltaY，如果error小于0，y发生变化，error加上deltaX。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;最终版本的两点画线代码如下：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-csharp&#34;&gt;List&amp;lt;Coord&amp;gt; GetLine(Coord from, Coord to) {
+    List&amp;lt;Coord&amp;gt; line = new List&amp;lt;Coord&amp;gt;();
+
+    int x = from.tileX;
+    int y = from.tileY;
+    int dx = to.tileX - from.tileX;
+    int dy = to.tileY - from.tileY;
+
+    bool inverted = false;
+    int step = Math.Sign(dx);
+    int gradientStep = Math.Sign(dy);
+
+    int longest = Math.Abs(dx);
+    int shortest = Math.Abs(dy);
+
+    if (longest &amp;lt; shortest) {
+        inverted = true;
+
+        step = Math.Sign(dy);
+        gradientStep = Math.Sign(dx);
+
+        longest = Math.Abs(dy);
+        shortest = Math.Abs(dx);
+    }
+
+    int gradientAccumulation = longest / 2;
+
+    for (int i = 0; i &amp;lt; longest; i++) {
+        line.Add(new Coord(x, y));
+        if (inverted) {
+            y += step;
+        } else {
+            x += step;
+        }
+
+        gradientAccumulation += shortest;
+        if (gradientAccumulation &amp;gt;= longest) {
+            if (inverted) {
+                x += gradientStep;
+            } else {
+                y += gradientStep;
+            }
+
+            gradientAccumulation -= longest;
+        }
+    }
+
+    return line;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;在&lt;code&gt;CreatePassage&lt;/code&gt;函数中：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-csharp&#34;&gt;void CreatePassage(Room roomA, Room roomB, Coord tileA, Coord tileB) {
+    Room.ConnectRooms(roomA, roomB);
+    //Debug.DrawLine (CoordToWorldPoint (tileA), CoordToWorldPoint (tileB), Color.green, 100);
+    List&amp;lt;Coord&amp;gt; line = GetLine(tileA, tileB);
+    foreach (Coord c in line) {
+        DrawCircle(c, 2);
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;获取路径点集合后，通过&lt;code&gt;DrawCircle&lt;/code&gt;方法在路径点周围清除map，确保路径畅通。&lt;/p&gt;
+
+&lt;p&gt;最终效果如图所示：
+&lt;img src=&#34;https://samsonchen1989.github.io/img/proc3/4.png&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;源代码可参考SebLague小哥的Github，&lt;a href=&#34;https://github.com/SebLague/Procedural-Cave-Generation&#34;&gt;戳我直达&lt;/a&gt;&lt;/em&gt;&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>程序生成地下城(2) #整理 #翻译 #Unity</title>

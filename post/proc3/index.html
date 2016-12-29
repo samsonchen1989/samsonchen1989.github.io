@@ -2,17 +2,17 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>也谈No Man&#39;s Sky - Gamer Cat</title>
+  <title>程序生成地下城(3) #整理 #翻译 #Unity - Gamer Cat</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
   
-  <meta name="description" content="如果二十年前有人说自己的游戏里面可以有18,446,744,073,709,551,616（其实就是2^64）颗不同的星球，每个星球有自己独">
+  <meta name="description" content="上篇教程结束，可以得到一个处理过的地下城map数组，拥有多个房间以及房间之间的两个最短连接点，如下图所示： 要连通整个地下城，需要在房间之间创">
   
-  <meta itemprop="name" content="也谈No Man&#39;s Sky - Gamer Cat">
-  <meta itemprop="description" content="如果二十年前有人说自己的游戏里面可以有18,446,744,073,709,551,616（其实就是2^64）颗不同的星球，每个星球有自己独">
+  <meta itemprop="name" content="程序生成地下城(3) #整理 #翻译 #Unity - Gamer Cat">
+  <meta itemprop="description" content="上篇教程结束，可以得到一个处理过的地下城map数组，拥有多个房间以及房间之间的两个最短连接点，如下图所示： 要连通整个地下城，需要在房间之间创">
   <meta itemprop="image" content="https://samsonchen1989.github.io/img/author.jpg">
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:site" content="@samsonchen_1989" />
-  <meta name="twitter:title" content="也谈No Man&#39;s Sky - Gamer Cat" />
+  <meta name="twitter:title" content="程序生成地下城(3) #整理 #翻译 #Unity - Gamer Cat" />
   
   <meta name="twitter:description" content="hehe">
   
@@ -59,7 +59,7 @@
 	<article itemprop="articleBody">
     <header class="article-info clearfix">
   <h1 itemprop="name">
-      <a href="https://samsonchen1989.github.io/post/nms/" title="也谈No Man&#39;s Sky" itemprop="url">也谈No Man&#39;s Sky</a>
+      <a href="https://samsonchen1989.github.io/post/proc3/" title="程序生成地下城(3) #整理 #翻译 #Unity" itemprop="url">程序生成地下城(3) #整理 #翻译 #Unity</a>
   </h1>
   <p class="article-author">By
     
@@ -67,46 +67,125 @@
     
   </p>
   <p class="article-time">
-    <time datetime="2016-08-15 18:49:00 &#43;0800 HKT" itemprop="datePublished">2016年08月15日</time>
+    <time datetime="2016-12-28 16:43:10 &#43;0800 HKT" itemprop="datePublished">2016年12月28日</time>
   </p>
 </header>
 
 	<div class="article-content">
     
-    <p>如果二十年前有人说自己的游戏里面可以有18,446,744,073,709,551,616（其实就是<strong>2^64</strong>）颗不同的星球，每个星球有自己独特的地貌、环境、生物甚至独特的食物链，你一定会觉得他是被那些节奏诡异闪着《电子世界争霸战》癫狂游离光线的游戏闪傻了。不过2年前《No Man&rsquo;s Sky》在E3上展出的时候，没有人觉得这个是玩笑，只是有点将信将疑——这个当时还只有4个人的工作室<strong>Hello Games</strong>会把这款号称无限可能的游戏推到什么样的高度。</p>
+    <p>上篇教程结束，可以得到一个处理过的地下城<code>map</code>数组，拥有多个房间以及房间之间的两个最短<strong>连接点</strong>，如下图所示：
+<img src="/img/proc3/1.png" alt="" /></p>
 
-<p>《No Man&rsquo;s Sky》初始版本才3.4个G，但丝毫不影响他模拟星球的能力。在强大的硬件机能支撑下，Procedural Generation变得离玩家越来越近。随着Rougelike类型游戏的流行，很多游戏中的关卡不再是一成不变只要背板就能通过，而是每次随机生成确保每次游戏都有独一无二的体验，比较典型的像《以撒的结合》关卡，但严格意义上来说市面上大部分的Rougelike游戏并不算纯粹的程序生成。依然需要关卡设计师来创造一些基本的地图，然后用伪随机的方式（参见以撒中的Seed）选取地图和怪物进行拼接和配置。</p>
+<p>要连通整个地下城，需要在房间之间创建路径，既然我们已经有了路径的首尾两点，那问题就变成了如何<strong>在一个二维像素网格中，给定两个点，点出连接两点的线段</strong>：
+<img src="/img/proc3/2.png" alt="" /></p>
 
-<p>Unity里一种伪随机数的实现方式：</p>
+<p>可能在上个世纪人们造像素显示器的时候就面临过这个问题，也留下了一个很经典的算法：<a href="https://zh.wikipedia.org/wiki/%E5%B8%83%E9%9B%B7%E6%A3%AE%E6%BC%A2%E5%A7%86%E7%9B%B4%E7%B7%9A%E6%BC%94%E7%AE%97%E6%B3%95"><strong>布雷森漢姆直線演算法</strong></a>。</p>
 
-<pre><code class="language-csharp">    // Unity params
-    public bool useRandomSeed;
+<p>从最简单的情况开始，假设我们有两点<strong>p1(x1, y1)</strong>，<strong>p2(x2, y2)</strong>，p2在p1的右上方。可以算出斜率<strong>delta</strong>为(y2 - y1) / (x2 - x1)。设定一个误差值error，初始设为0。</p>
 
-    // When use pseudo random
-    if (useRandomSeed) {
-        seed = Time.time.ToString();
+<p>版本1:</p>
+
+<ol>
+<li>从x1开始，顺序遍历从x1到x2的点x，y从y1开始先保持不变。</li>
+<li>填充点(x, y)。</li>
+<li>x每增加1，error就增加斜率delta。</li>
+<li>当error值大于<strong>0.5</strong>的时候，说明这时候偏差更偏向于y，y增加1，error值减去1。</li>
+<li>重复步骤2，直到x遍历结束。</li>
+</ol>
+
+<p>连线后的结果如图所示：
+<img src="/img/proc3/3.png" alt="" /></p>
+
+<p>上面的基础算法只适用于p2在p1右上角，且斜率delta小于1的情况，可以稍微修改下以适用于一般情况：</p>
+
+<p>版本2:</p>
+
+<ol>
+<li>如果斜率delta大于1，则交换x1，y1和交换x2，y2，相当于旋转坐标系90度。</li>
+<li>如果p2在p1左边(x2 &lt; x1)，则交换起始点。</li>
+<li>如果p2在p1下边(y2 &lt; y1)，则当error值大于0.5时，y减去1。</li>
+</ol>
+
+<p>考虑到浮点数的运算效率比较慢，还可以把error和delta变为整数进行运算：
+版本3:</p>
+
+<ol>
+<li>error值初始设置为(int)((x2 - x1)/2)</li>
+<li>deltaY值设置为abs(y2 - y1)，deltaX值设置为(x2 - x1)</li>
+<li>x每增加1，error值就减去deltaY，如果error小于0，y发生变化，error加上deltaX。</li>
+</ol>
+
+<p>最终版本的两点画线代码如下：</p>
+
+<pre><code class="language-csharp">List&lt;Coord&gt; GetLine(Coord from, Coord to) {
+    List&lt;Coord&gt; line = new List&lt;Coord&gt;();
+
+    int x = from.tileX;
+    int y = from.tileY;
+    int dx = to.tileX - from.tileX;
+    int dy = to.tileY - from.tileY;
+
+    bool inverted = false;
+    int step = Math.Sign(dx);
+    int gradientStep = Math.Sign(dy);
+
+    int longest = Math.Abs(dx);
+    int shortest = Math.Abs(dy);
+
+    if (longest &lt; shortest) {
+        inverted = true;
+
+        step = Math.Sign(dy);
+        gradientStep = Math.Sign(dx);
+
+        longest = Math.Abs(dy);
+        shortest = Math.Abs(dx);
     }
 
-    System.Random pseudoRandom = new System.Random(seed.GetHashCode());
-    // In a loop
-    for () {
-        pseudoRandom.Next(0,100)
+    int gradientAccumulation = longest / 2;
+
+    for (int i = 0; i &lt; longest; i++) {
+        line.Add(new Coord(x, y));
+        if (inverted) {
+            y += step;
+        } else {
+            x += step;
+        }
+
+        gradientAccumulation += shortest;
+        if (gradientAccumulation &gt;= longest) {
+            if (inverted) {
+                x += gradientStep;
+            } else {
+                y += gradientStep;
+            }
+
+            gradientAccumulation -= longest;
+        }
     }
+
+    return line;
+}
 </code></pre>
 
-<p>《No Man&rsquo;s Sky》把Procedural Generation在游戏中的应用又提升到一个新的高度，大到星球的地表，小到生物的音效，全部都是由程序按照一定的规则生成。在大部分的Procedural Generation实验里，这些规则都是无序或者散乱的，但是在无人深空里，这套规则，按照制作组的野心，就是尽量模拟靠近宇宙自然的规则，从气候-&gt;资源-&gt;地形-&gt;食物链-&gt;生物，一层以一层为基础迭代而来，这才形成了一个独一无二的星球。</p>
+<p>在<code>CreatePassage</code>函数中：</p>
 
-<p>当然，野心归野心，从技术角度，NMS的完成度是比较高和有先驱性的，但是作为一个游戏，把所有的生成交给电脑，玩家会有意外的惊喜，但也容易被可能重复的内容磨掉兴趣，让他们觉得“都是套路”。毕竟规则是有限的，有很多人喜欢设计出的惊喜和设计出的情绪调动，而不喜欢冷冰冰的电脑。</p>
+<pre><code class="language-csharp">void CreatePassage(Room roomA, Room roomB, Coord tileA, Coord tileB) {
+    Room.ConnectRooms(roomA, roomB);
+    //Debug.DrawLine (CoordToWorldPoint (tileA), CoordToWorldPoint (tileB), Color.green, 100);
+    List&lt;Coord&gt; line = GetLine(tileA, tileB);
+    foreach (Coord c in line) {
+        DrawCircle(c, 2);
+    }
+}
+</code></pre>
 
-<p>从目前的评测来看，NMS的Procedural Generation主要集中在图形和音效上，但在系统和AI上没有什么建树，贸易系统和NPC系统都很初级，喜欢玩太空4X类游戏的人估计也没法再这个游戏里找到自己的点，因为他只有eXplore和eXploit，却没有eXpand和eXterminate。</p>
+<p>获取路径点集合后，通过<code>DrawCircle</code>方法在路径点周围清除map，确保路径畅通。</p>
 
-<p>说到底，这个游戏只是一个程序员们的自然模拟实验，被过于放在聚光灯和舆论中曝光了。战斗，交易，飞船只是附属品，这个游戏的核心在于探索，但大部分人并不在意自己能发现啥，也没有耐心细细地探索每个世界。这个游戏并不适合所有的玩家，这个纯粹由程序和数学构建的游戏，没有刻意的包装和讨好，就像一杯纯净水，拥有无限的形态和可能性，但不可口。</p>
+<p>最终效果如图所示：
+<img src="/img/proc3/4.png" alt="" /></p>
 
-<p>按照现在3A游戏的开发成本和已经不像以前那样饥不择食的玩家，纯PVE和关卡设计的游戏越来越捉襟见肘<del>如果能达到像Limbo和Inside那种设计高度当我没说</del>PVP（守望屁股），Rougelike（以撒），类Minecraft和Procedural Generation（无人深空）类型的游戏更容易脱颖而出。很多人说NMS吹牛吹破了天，我倒觉得从4个人到20个人，Hello Game小作坊能花三年做到这样的完成度，已经很了不起了。在技术的实验探索上，也不知道比国内某些冷嘲热讽的开发者高到哪里去。</p>
-
-<p>这里有一篇比较专业的评测，有兴趣可以看看：<a href="http://www.makeuseof.com/tag/no-mans-sky-future-procedural-games/">No Man’s Sky and the Future of Procedural Games</a></p>
-
-<p>这位大哥受无人深空启发，做了一个<a href="https://marian42.github.io/proceduralart/">2D的星球版画生成器</a>。</p>
+<p><em>源代码可参考SebLague小哥的Github，<a href="https://github.com/SebLague/Procedural-Cave-Generation">戳我直达</a></em></p>
 
 	</div>
   <footer class="article-footer clearfix">
@@ -115,7 +194,7 @@
 
 
   <div class="article-share" id="share">
-    <div data-url="https://samsonchen1989.github.io/post/nms/" data-title="也谈No Man&#39;s Sky" data-tsina="" class="share clearfix">
+    <div data-url="https://samsonchen1989.github.io/post/proc3/" data-title="程序生成地下城(3) #整理 #翻译 #Unity" data-tsina="" class="share clearfix">
     </div>
   </div>
 </footer>
